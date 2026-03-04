@@ -39,15 +39,19 @@ export class AuthService {
       name: dto.name,
     });
 
-    await this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
 
-    return { message: 'User registered successfully' };
+    const payload = { sub: savedUser.id, email: savedUser.email };
+    const token = this.jwtService.sign(payload);
+
+    return { token };
   }
 
   async login(dto: LoginDto) {
     // 1. Пошук користувача
     const user = await this.usersRepository.findOne({
       where: { email: dto.email },
+      select: ['id', 'email', 'password', 'name'],
     });
 
     if (!user) {
@@ -65,6 +69,6 @@ export class AuthService {
     const payload = { sub: user.id, email: user.email };
     const token = this.jwtService.sign(payload);
 
-    return { access_token: token };
+    return { token };
   }
 }

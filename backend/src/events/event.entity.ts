@@ -33,10 +33,10 @@ export class Event {
   @Column({ default: 'public' })
   visibility: string;
 
-  @ManyToOne(() => User, { eager: true })
+  @ManyToOne(() => User, (user) => user.organizedEvents, { eager: true })
   organizer: User;
 
-  @ManyToMany(() => User)
+  @ManyToMany(() => User, (user) => user.participatedEvents)
   @JoinTable({ name: 'participants' })
   participants: User[];
 
