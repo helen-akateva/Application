@@ -7,12 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import * as yup from 'yup';
 import { User } from '../users/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { registerSchema } from './schemas/register.schema';
-import { loginSchema } from './schemas/login.schema';
 
 @Injectable()
 export class AuthService {
@@ -23,14 +20,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    try {
-      await registerSchema.validate(dto, { abortEarly: false });
-    } catch (error) {
-      if (error instanceof yup.ValidationError) {
-        throw new BadRequestException(error.errors);
-      }
-    }
-
+    // 1. Перевірка, чи існує користувач
     const existingUser = await this.usersRepository.findOne({
       where: { email: dto.email },
     });
@@ -39,8 +29,10 @@ export class AuthService {
       throw new BadRequestException('User with this email already exists');
     }
 
+    // 2. Хешування пароля
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
+    // 3. Створення та збереження
     const user = this.usersRepository.create({
       email: dto.email,
       password: hashedPassword,
@@ -53,14 +45,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    try {
-      await loginSchema.validate(dto, { abortEarly: false });
-    } catch (error) {
-      if (error instanceof yup.ValidationError) {
-        throw new BadRequestException(error.errors);
-      }
-    }
-
+    // 1. Пошук користувача
     const user = await this.usersRepository.findOne({
       where: { email: dto.email },
     });
@@ -69,12 +54,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // 2. Порівняння паролів
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // 3. Генерація JWT токена
     const payload = { sub: user.id, email: user.email };
     const token = this.jwtService.sign(payload);
 
