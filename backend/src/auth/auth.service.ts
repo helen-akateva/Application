@@ -17,10 +17,10 @@ export class AuthService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async register(dto: RegisterDto) {
-    // 1. Перевірка, чи існує користувач
+    // 1. Check if user already exists
     const existingUser = await this.usersRepository.findOne({
       where: { email: dto.email },
     });
@@ -29,10 +29,10 @@ export class AuthService {
       throw new BadRequestException('User with this email already exists');
     }
 
-    // 2. Хешування пароля
+    // 2. Hash the password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    // 3. Створення та збереження
+    // 3. Create and save new user
     const user = this.usersRepository.create({
       email: dto.email,
       password: hashedPassword,
@@ -44,11 +44,15 @@ export class AuthService {
     const payload = { sub: savedUser.id, email: savedUser.email };
     const token = this.jwtService.sign(payload);
 
-    return { token };
+    // Return token and user data without password
+    return {
+      token,
+      user: { id: savedUser.id, email: savedUser.email, name: savedUser.name },
+    };
   }
 
   async login(dto: LoginDto) {
-    // 1. Пошук користувача
+    // 1. Find user by email
     const user = await this.usersRepository.findOne({
       where: { email: dto.email },
       select: ['id', 'email', 'password', 'name'],
@@ -58,17 +62,33 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // 2. Порівняння паролів
+    // 2. Compare passwords
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // 3. Генерація JWT токена
+    // 3. Generate JWT token
     const payload = { sub: user.id, email: user.email };
     const token = this.jwtService.sign(payload);
 
-    return { token };
+    // Return token and user data without password
+    return {
+      token,
+      user: { id: user.id, email: user.email, name: user.name },
+    };
+  }
+
+  async getMe(userId: number) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return { id: user.id, email: user.email, name: user.name };
   }
 }

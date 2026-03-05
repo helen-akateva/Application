@@ -19,5 +19,5 @@ export const createEventSchema = yup.object({
   visibility: yup
     .string()
     .oneOf(['public', 'private'], 'Visibility must be public or private')
-    .required('Visibility is required'),
+    .default('public'),
 });

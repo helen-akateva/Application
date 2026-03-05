@@ -20,19 +20,11 @@ export class EventsService {
     private usersRepository: Repository<User>,
   ) { }
 
-  async findAll(userId?: number): Promise<Event[]> {
-    const qb = this.eventsRepository
-      .createQueryBuilder('event')
-      .leftJoinAndSelect('event.organizer', 'organizer')
-      .leftJoinAndSelect('event.participants', 'participants')
-      .where('event.visibility = :vis', { vis: 'public' });
-
-    if (userId) {
-      qb.orWhere('organizer.id = :userId', { userId })
-        .orWhere('participants.id = :userId', { userId });
-    }
-
-    return qb.getMany();
+  async findAll(): Promise<Event[]> {
+    return this.eventsRepository.find({
+      where: { visibility: 'public' },
+      relations: ['organizer', 'participants'],
+    });
   }
 
   async findOne(id: number, userId?: number): Promise<Event> {
@@ -44,9 +36,12 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
     if (event.visibility === 'private') {
+      // Must be logged in to see private events
       if (!userId) {
         throw new ForbiddenException('Please login to view this event');
       }
+
+      // Check if user is organizer or already joined
       const isRelated =
         event.organizer.id === userId ||
         event.participants.some((p) => p.id === userId);
@@ -123,10 +118,12 @@ export class EventsService {
       throw new NotFoundException('User not found');
     }
 
+    // Check if user is the organizer
     if (event.organizer.id === userId) {
       throw new BadRequestException('Organizer cannot join their own event');
     }
 
+    // Check if user already joined
     const isAlreadyJoined = event.participants.some((p) => p.id === userId);
     if (isAlreadyJoined) {
       throw new BadRequestException('You are already joined this event');
@@ -144,17 +141,20 @@ export class EventsService {
   async leave(eventId: number, userId: number): Promise<{ message: string }> {
     const event = await this.findOne(eventId);
 
+    // Check if user is actually in the event
     const isJoined = event.participants.some((p) => p.id === userId);
     if (!isJoined) {
       throw new BadRequestException('You are not a participant of this event');
     }
 
+    // Remove user from the participants list
     event.participants = event.participants.filter((p) => p.id !== userId);
     await this.eventsRepository.save(event);
     return { message: 'Successfully left the event' };
   }
 
   async getUserEvents(userId: number): Promise<Event[]> {
+    // Find all events where user is organizer OR participant
     return this.eventsRepository
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.organizer', 'organizer')

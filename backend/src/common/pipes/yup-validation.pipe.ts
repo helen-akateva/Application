@@ -4,11 +4,11 @@ import {
   ArgumentMetadata,
   BadRequestException,
 } from '@nestjs/common';
-import type { AnyObjectSchema, ValidationError } from 'yup';
+import { ValidationError, type AnyObjectSchema } from 'yup';
 
 @Injectable()
 export class YupValidationPipe implements PipeTransform {
-  constructor(private schema: AnyObjectSchema) {}
+  constructor(private schema: AnyObjectSchema) { }
 
   async transform(
     value: unknown,
@@ -25,10 +25,16 @@ export class YupValidationPipe implements PipeTransform {
       });
       return validatedValue;
     } catch (err: unknown) {
-      const validationError = err as ValidationError;
+      if (err instanceof ValidationError) {
+        throw new BadRequestException({
+          message: 'Validation failed',
+          errors: err.errors || [],
+        });
+      }
+
       throw new BadRequestException({
         message: 'Validation failed',
-        errors: validationError.errors || [],
+        errors: [(err as Error).message],
       });
     }
   }

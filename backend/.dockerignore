@@ -1,0 +1,20 @@
+# Dependencies - installed during build
+node_modules
+
+# Build code - created during build
+dist
+
+# Environment variables - passed through docker-compose.yml
+.env
+.env.*
+
+# Git history - not needed in container
+.git
+.gitignore
+
+# IDE files
+.vscode
+.idea
+
+# Logs
+*.log

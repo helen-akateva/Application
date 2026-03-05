@@ -38,11 +38,12 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private extractToken(request: RequestWithUser): string | undefined {
-    // 1. Спочатку шукаємо в cookies (httpOnly)
-    const cookieToken = request.cookies?.['access_token'] as string | undefined;
+    // 1. First, try to get token from cookies (httpOnly)
+    const cookies = request.cookies as Record<string, string> | undefined;
+    const cookieToken = cookies?.['access_token'];
     if (cookieToken) return cookieToken;
 
-    // 2. Fallback — Bearer header (для Swagger/Postman)
+    // 2. Fallback - check Bearer header (for Swagger/Postman)
     const authHeader = request.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       return authHeader.split(' ')[1];

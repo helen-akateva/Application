@@ -26,9 +26,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let errors: string[] | null = null;
 
     if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-      const resObj = exceptionResponse as Record<string, unknown>;
-      message = (resObj['message'] as string) || message;
-      errors = (resObj['errors'] as string[]) || null;
+      if ('message' in exceptionResponse && typeof exceptionResponse.message === 'string') {
+        message = exceptionResponse.message;
+      }
+      if ('errors' in exceptionResponse && Array.isArray(exceptionResponse.errors)) {
+        errors = exceptionResponse.errors as string[];
+      }
     } else if (exception instanceof Error) {
       message = exception.message;
     }

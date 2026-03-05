@@ -20,7 +20,7 @@ import { UsersModule } from './users/users.module';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, //це тільки для development.
+        synchronize: true, // Only for development, do not use in production
       }),
       inject: [ConfigService],
     }),
@@ -29,4 +29,4 @@ import { UsersModule } from './users/users.module';
     UsersModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

@@ -22,16 +22,17 @@ export class OptionalJwtAuthGuard implements CanActivate {
                 const payload: JwtPayload =
                     await this.jwtService.verifyAsync(token);
                 request.user = payload;
-            } catch {
-                // Токен невалідний — ігноруємо, просто немає юзера
+            } catch (err: unknown) {
+                // Token is invalid - ignore it, no user is attached
             }
         }
 
-        return true; // Завжди пропускаємо запит
+        return true; // Always allow request
     }
 
     private extractToken(request: RequestWithOptionalUser): string | undefined {
-        const cookieToken = request.cookies?.['access_token'] as string | undefined;
+        const cookies = request.cookies as Record<string, string> | undefined;
+        const cookieToken = cookies?.['access_token'];
         if (cookieToken) return cookieToken;
 
         const authHeader = request.headers.authorization;

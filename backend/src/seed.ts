@@ -1,11 +1,14 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import * as dotenv from 'dotenv';
 import { User } from './users/user.entity';
 import { Event } from './events/event.entity';
-import { ConfigModule } from '@nestjs/config';
+
+// Read .env file and set values in process.env
+// It works without NestJS (unlike ConfigModule)
+dotenv.config();
 
 async function seed() {
-  await ConfigModule.forRoot();
 
   const dataSource = new DataSource({
     type: 'postgres',
@@ -24,7 +27,7 @@ async function seed() {
   const userRepo = dataSource.getRepository(User);
   const eventRepo = dataSource.getRepository(Event);
 
-  // Перевірка, чи вже є дані
+  // Check if data already exists
   const existingUsers = await userRepo.count();
   if (existingUsers > 0) {
     console.log('Database already has data. Skipping seed.');
@@ -32,7 +35,7 @@ async function seed() {
     return;
   }
 
-  // Створення 2 користувачів
+  // Create 2 users
   const password1 = await bcrypt.hash('Password123!', 10);
   const password2 = await bcrypt.hash('Password456!', 10);
 
@@ -51,7 +54,7 @@ async function seed() {
   await userRepo.save([user1, user2]);
   console.log('Created 2 users: oksana@example.com, dmytro@example.com');
 
-  // Створення 3 публічних подій
+  // Create 3 public events
   const now = new Date();
 
   const event1 = eventRepo.create({

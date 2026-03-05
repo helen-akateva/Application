@@ -1,5 +1,19 @@
-import { Controller, Post, Body, UsePipes, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UsePipes,
+  Res,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -7,11 +21,13 @@ import { LoginDto } from './dto/login.dto';
 import { YupValidationPipe } from '../common/pipes/yup-validation.pipe';
 import { registerSchema } from './schemas/register.schema';
 import { loginSchema } from './schemas/login.schema';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import type { RequestWithUser } from '../common/interfaces/request-with-user.interface';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register new user' })
@@ -22,9 +38,11 @@ export class AuthController {
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { token } = await this.authService.register(dto);
+    // Create new user and get their token
+    const { token, user } = await this.authService.register(dto);
+    // Save token in secure HTTP-only cookie
     this.setTokenCookie(res, token);
-    return { message: 'User registered successfully' };
+    return { message: 'User registered successfully', user };
   }
 
   @Post('login')
@@ -36,15 +54,29 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { token } = await this.authService.login(dto);
+    // Check credentials and get token
+    const { token, user } = await this.authService.login(dto);
+    // Save token in cookie to keep user logged in
     this.setTokenCookie(res, token);
-    return { message: 'Logged in successfully' };
+    return { message: 'Logged in successfully', user };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Get current authenticated user' })
+  @ApiResponse({ status: 200, description: 'Current user data' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  async getMe(@Request() req: RequestWithUser) {
+    return this.authService.getMe(req.user.sub);
   }
 
   @Post('logout')
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  // eslint-disable-next-line @typescript-eslint/require-await
   async logout(@Res({ passthrough: true }) res: Response) {
+    // Delete the token cookie to log user out
     res.clearCookie('access_token');
     return { message: 'Logged out successfully' };
   }
