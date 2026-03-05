@@ -10,6 +10,14 @@ import {
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
+export const EVENT_VISIBILITY = {
+  PUBLIC: 'public',
+  PRIVATE: 'private',
+} as const;
+
+export type EventVisibility =
+  (typeof EVENT_VISIBILITY)[keyof typeof EVENT_VISIBILITY];
+
 @Entity('events')
 export class Event {
   @PrimaryGeneratedColumn()
@@ -27,11 +35,11 @@ export class Event {
   @Column()
   location: string;
 
-  @Column({ nullable: true })
-  capacity: number;
+  @Column({ type: 'int', nullable: true })
+  capacity: number | null;
 
-  @Column({ default: 'public' })
-  visibility: string;
+  @Column({ type: 'varchar', default: EVENT_VISIBILITY.PUBLIC })
+  visibility: EventVisibility;
 
   @ManyToOne(() => User, (user) => user.organizedEvents, { eager: true })
   organizer: User;

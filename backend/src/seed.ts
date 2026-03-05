@@ -2,14 +2,11 @@ import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
 import { User } from './users/user.entity';
-import { Event } from './events/event.entity';
+import { Event, EVENT_VISIBILITY } from './events/event.entity';
 
-// Read .env file and set values in process.env
-// It works without NestJS (unlike ConfigModule)
 dotenv.config();
 
 async function seed() {
-
   const dataSource = new DataSource({
     type: 'postgres',
     host: process.env.DB_HOST || 'localhost',
@@ -27,7 +24,6 @@ async function seed() {
   const userRepo = dataSource.getRepository(User);
   const eventRepo = dataSource.getRepository(Event);
 
-  // Check if data already exists
   const existingUsers = await userRepo.count();
   if (existingUsers > 0) {
     console.log('Database already has data. Skipping seed.');
@@ -35,7 +31,6 @@ async function seed() {
     return;
   }
 
-  // Create 2 users
   const password1 = await bcrypt.hash('Password123!', 10);
   const password2 = await bcrypt.hash('Password456!', 10);
 
@@ -54,7 +49,6 @@ async function seed() {
   await userRepo.save([user1, user2]);
   console.log('Created 2 users: oksana@example.com, dmytro@example.com');
 
-  // Create 3 public events
   const now = new Date();
 
   const event1 = eventRepo.create({
@@ -64,7 +58,7 @@ async function seed() {
     date: new Date(now.getFullYear(), now.getMonth() + 1, 15, 9, 0),
     location: 'Kyiv, Mariinsky Park',
     capacity: 25,
-    visibility: 'public',
+    visibility: EVENT_VISIBILITY.PUBLIC,
     organizer: user1,
     participants: [user2],
   });
@@ -76,7 +70,7 @@ async function seed() {
     date: new Date(now.getFullYear(), now.getMonth() + 1, 20, 18, 0),
     location: 'Lviv, Gallery "Dzyga"',
     capacity: 50,
-    visibility: 'public',
+    visibility: EVENT_VISIBILITY.PUBLIC,
     organizer: user2,
     participants: [user1],
   });
@@ -88,7 +82,7 @@ async function seed() {
     date: new Date(now.getFullYear(), now.getMonth() + 2, 5, 14, 0),
     location: 'Odesa, Culinary Studio "Smachno"',
     capacity: 12,
-    visibility: 'public',
+    visibility: EVENT_VISIBILITY.PUBLIC,
     organizer: user1,
     participants: [],
   });

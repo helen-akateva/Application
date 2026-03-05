@@ -1,4 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EVENT_VISIBILITY } from '../event.entity';
+import type { EventVisibility } from '../event.entity';
 
 export class CreateEventDto {
   @ApiProperty({ example: 'Tech Conference 2026' })
@@ -16,6 +18,9 @@ export class CreateEventDto {
   @ApiPropertyOptional({ example: 100 })
   capacity?: number;
 
-  @ApiProperty({ example: 'public', enum: ['public', 'private'] })
-  visibility: string;
+  @ApiProperty({
+    example: EVENT_VISIBILITY.PUBLIC,
+    enum: Object.values(EVENT_VISIBILITY),
+  })
+  visibility: EventVisibility;
 }

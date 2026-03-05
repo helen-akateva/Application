@@ -7,6 +7,7 @@ import {
   Res,
   UseGuards,
   Request,
+  HttpCode,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -33,6 +34,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Register new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   @ApiResponse({ status: 400, description: 'Validation failed or User exists' })
+  @ApiResponse({
+    status: 409,
+    description: 'User with this email already exists',
+  })
   @UsePipes(new YupValidationPipe(registerSchema))
   async register(
     @Body() dto: RegisterDto,
@@ -46,6 +51,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })

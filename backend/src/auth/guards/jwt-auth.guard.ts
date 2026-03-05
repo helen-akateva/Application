@@ -6,20 +6,16 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
+import {
+  JwtPayload,
+  RequestWithUser,
+} from '../../common/interfaces/request-with-user.interface';
 
-export interface JwtPayload {
-  sub: number;
-  email: string;
-}
-
-export interface RequestWithUser extends Request {
-  user: JwtPayload;
-}
+type CookieJar = Readonly<Record<string, string>>;
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) { }
-
+  constructor(private readonly jwtService: JwtService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const token = this.extractToken(request);
@@ -29,7 +25,10 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const payload: JwtPayload = await this.jwtService.verifyAsync(token);
+      const payload: unknown = await this.jwtService.verifyAsync(token);
+      if (!isJwtPayload(payload)) {
+        throw new UnauthorizedException('Invalid token payload');
+      }
       request.user = payload;
       return true;
     } catch {
@@ -38,17 +37,33 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private extractToken(request: RequestWithUser): string | undefined {
-    // 1. First, try to get token from cookies (httpOnly)
-    const cookies = request.cookies as Record<string, string> | undefined;
-    const cookieToken = cookies?.['access_token'];
-    if (cookieToken) return cookieToken;
+    const cookies: unknown = request.cookies;
+    if (isCookieJar(cookies)) {
+      const cookieToken = cookies['access_token'];
+      if (cookieToken) return cookieToken;
+    }
 
-    // 2. Fallback - check Bearer header (for Swagger/Postman)
     const authHeader = request.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
-      return authHeader.split(' ')[1];
+      const parts = authHeader.split(' ');
+      return parts[1] ?? undefined;
     }
 
     return undefined;
   }
+}
+
+function isJwtPayload(value: unknown): value is JwtPayload {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'sub' in value &&
+    'email' in value &&
+    typeof (value as Record<string, unknown>)['sub'] === 'number' &&
+    typeof (value as Record<string, unknown>)['email'] === 'string'
+  );
+}
+
+function isCookieJar(value: unknown): value is CookieJar {
+  return typeof value === 'object' && value !== null;
 }

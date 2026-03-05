@@ -1,6 +1,6 @@
 import {
   Injectable,
-  BadRequestException,
+  ConflictException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,7 +17,7 @@ export class AuthService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async register(dto: RegisterDto) {
     // 1. Check if user already exists
@@ -26,7 +26,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new BadRequestException('User with this email already exists');
+      throw new ConflictException('User with this email already exists');
     }
 
     // 2. Hash the password
