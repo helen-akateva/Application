@@ -10,6 +10,7 @@ import {
   leaveEvent,
 } from "../api/events";
 import EventCard from "../components/EventCard";
+import Button from "../components/Button";
 
 export default function EventsPage() {
   const {
@@ -148,13 +149,15 @@ export default function EventsPage() {
             <p className="mt-1 text-sm text-gray-400">
               Try a different search term.
             </p>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setSearch("")}
               aria-label="Clear search and show all events"
-              className="mt-3 text-sm text-green-600 hover:text-green-700"
+              className="mt-3 text-green-600 hover:text-green-700"
             >
               Clear search
-            </button>
+            </Button>
           </div>
         )}
 

@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CreateEventPage from './pages/CreateEventPage';
 import MyEventsPage from './pages/MyEventsPage';
+import EditEventPage from './pages/EditEventPage';
 import Navbar from './components/Navbar';
 
 // Secure route — only for logged in users
@@ -17,12 +18,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
-       <Navbar />
+      <Navbar />
       <Routes>
         {/* Public pages — accessible to everyone */}
         <Route path="/" element={<EventsPage />} />
         <Route path="/events/:id" element={<EventDetailsPage />} />
-        <Route path="/login" element={<LoginPage/>} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Protected pages — for logged in users only*/}
@@ -39,6 +40,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MyEventsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditEventPage />
             </ProtectedRoute>
           }
         />

@@ -4,6 +4,7 @@ import { useAuthStore } from "../store/authStore";
 import { loginUser } from "../api/auth";
 import type { ApiError } from "../types";
 import { AxiosError } from "axios";
+import Button from "../components/Button";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -70,13 +71,13 @@ export default function LoginPage() {
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100"
           />
 
-          <button
+          <Button
             type="submit"
-            disabled={isLoading}
-            className="w-full rounded-lg bg-green-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+            size="full"
+            isLoading={isLoading}
           >
-            {isLoading ? "Signing in..." : "Sign in"}
-          </button>
+            Sign in
+          </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-500">

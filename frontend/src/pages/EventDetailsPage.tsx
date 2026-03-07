@@ -18,6 +18,7 @@ import {
   deleteEvent,
 } from "../api/events";
 import type { EventDetails, ApiError } from "../types";
+import Button from "../components/Button";
 
 export default function EventDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,10 +32,10 @@ export default function EventDetailsPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Реф для нативного діалогу
+  // Reference for native dialog
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  // 1. Логіка завантаження даних
+  // 1. Load data logic
   useEffect(() => {
     const loadEvent = async () => {
       if (!id) return;
@@ -52,7 +53,7 @@ export default function EventDetailsPage() {
     loadEvent();
   }, [id]);
 
-  // 2. Керування модальним вікном через нативний API
+  // 2. Manage modal with native API
   useEffect(() => {
     const dialog = dialogRef.current;
     if (showDeleteModal) {
@@ -109,7 +110,7 @@ export default function EventDetailsPage() {
       .toUpperCase()
       .slice(0, 2);
 
-  // 3. Логіка приєднання/виходу (з обробкою помилок)
+  // 3. Join/Leave logic (with errors)
   const handleJoinLeave = async () => {
     if (!isAuthenticated) return navigate("/login");
 
@@ -122,11 +123,11 @@ export default function EventDetailsPage() {
         setEvent((prev) =>
           prev
             ? {
-                ...prev,
-                participants: prev.participants.filter(
-                  (p) => p.id !== user!.id,
-                ),
-              }
+              ...prev,
+              participants: prev.participants.filter(
+                (p) => p.id !== user!.id,
+              ),
+            }
             : null,
         );
       } else {
@@ -134,12 +135,12 @@ export default function EventDetailsPage() {
         setEvent((prev) =>
           prev && user
             ? {
-                ...prev,
-                participants: [
-                  ...prev.participants,
-                  { ...user, createdAt: "" },
-                ],
-              }
+              ...prev,
+              participants: [
+                ...prev.participants,
+                { ...user, createdAt: "" },
+              ],
+            }
             : null,
         );
       }
@@ -147,7 +148,7 @@ export default function EventDetailsPage() {
       const axiosError = err as AxiosError<ApiError>;
       setActionError(
         axiosError.response?.data?.message ||
-          "Action failed. Please try again.",
+        "Action failed. Please try again.",
       );
     } finally {
       setActionLoading(false);
@@ -172,7 +173,7 @@ export default function EventDetailsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 md:px-6">
-      {/* Навігація */}
+      {/* Navigation */}
       <nav aria-label="Back" className="mb-6">
         <Link
           to="/"
@@ -184,7 +185,7 @@ export default function EventDetailsPage() {
       </nav>
 
       <article>
-        {/* Шапка події */}
+        {/* Event Header */}
         <header className="mb-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">
@@ -197,20 +198,21 @@ export default function EventDetailsPage() {
                 role="group"
                 aria-label="Organizer controls"
               >
-                <Link
-                  to={`/events/${event.id}/edit`}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/events/${event.id}/edit`)}
+                  leftIcon={<Pencil className="h-4 w-4" aria-hidden="true" />}
                 >
-                  <Pencil className="h-4 w-4" aria-hidden="true" />
                   Edit
-                </Link>
-                <button
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-red-600 hover:bg-red-50 border-red-200"
                   onClick={() => setShowDeleteModal(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                  leftIcon={<Trash2 className="h-4 w-4" aria-hidden="true" />}
                 >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
                   Delete
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -221,7 +223,7 @@ export default function EventDetailsPage() {
           )}
         </header>
 
-        {/* Картка з деталями */}
+        {/* Details Card */}
         <section
           className="mb-10 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
           aria-label="Quick details"
@@ -261,7 +263,7 @@ export default function EventDetailsPage() {
           </ul>
         </section>
 
-        {/* Інформація про організатора */}
+        {/* Organizer Info */}
         <section className="mb-10" aria-labelledby="organizer-heading">
           <h2
             id="organizer-heading"
@@ -282,7 +284,7 @@ export default function EventDetailsPage() {
           </div>
         </section>
 
-        {/* Список учасників */}
+        {/* Participants List */}
         <section className="mb-10" aria-labelledby="participants-heading">
           <h2
             id="participants-heading"
@@ -311,7 +313,7 @@ export default function EventDetailsPage() {
           )}
         </section>
 
-        {/* Футер статті з дією */}
+        {/* Footer with actions */}
         {!isOrganizer && (
           <footer className="sticky bottom-6 mt-12 md:static">
             {actionError && (
@@ -322,31 +324,25 @@ export default function EventDetailsPage() {
                 {actionError}
               </p>
             )}
-            <button
+            <Button
               onClick={handleJoinLeave}
-              disabled={actionLoading}
-              aria-pressed={isParticipant}
-              className={`w-full rounded-xl py-4 text-base font-bold shadow-lg transition-all active:scale-[0.98] md:w-auto md:px-12 ${
-                isParticipant
-                  ? "bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50"
-                  : isFull
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
-                    : "bg-green-600 text-white hover:bg-green-700 hover:shadow-green-200"
-              }`}
+              isLoading={actionLoading}
+              variant={isParticipant ? "outline" : "primary"}
+              disabled={!isParticipant && isFull}
+              size="lg"
+              className="w-full md:w-auto md:px-12"
             >
-              {actionLoading
-                ? "Processing..."
-                : isParticipant
-                  ? "Leave Event"
-                  : isFull
-                    ? "Event Full"
-                    : "Join This Event"}
-            </button>
+              {isParticipant
+                ? "Leave Event"
+                : isFull
+                  ? "Event Full"
+                  : "Join This Event"}
+            </Button>
           </footer>
         )}
       </article>
 
-      {/* НАТИВНИЙ ДІАЛОГ ДЛЯ ВИДАЛЕННЯ */}
+      {/* Native dialog for delete */}
       <dialog
         ref={dialogRef}
         onClose={() => setShowDeleteModal(false)}
@@ -362,19 +358,21 @@ export default function EventDetailsPage() {
             . All participant data will be lost.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <button
+            <Button
+              variant="outline"
+              size="full"
               onClick={() => setShowDeleteModal(false)}
-              className="flex-1 rounded-xl border border-gray-300 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="danger"
+              size="full"
+              isLoading={actionLoading}
               onClick={handleDelete}
-              disabled={actionLoading}
-              className="flex-1 rounded-xl bg-red-600 py-3 text-sm font-bold text-white hover:bg-red-700 transition-colors disabled:opacity-50"
             >
-              {actionLoading ? "Deleting..." : "Yes, Delete"}
-            </button>
+              Yes, Delete
+            </Button>
           </div>
         </div>
       </dialog>
