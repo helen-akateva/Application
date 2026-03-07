@@ -24,7 +24,7 @@ export class EventsService {
     private eventsRepository: Repository<Event>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async findAll() {
     const events = await this.eventsRepository.find({
@@ -209,12 +209,11 @@ export class EventsService {
       .where('organizer.id = :userId OR participants.id = :userId', { userId })
       .getMany();
 
-    return events.map((event) => {
-      event.organizer = sanitizeUser(event.organizer) as User;
-      event.participants = event.participants.map(
-        (p) => sanitizeUser(p) as User,
-      );
-      return event;
-    });
+    return events.map(({ participants, ...event }) => ({
+      ...event,
+      organizer: sanitizeUser(event.organizer) as User,
+      participants: participants.map((p) => sanitizeUser(p) as User),
+      participantsCount: participants.length,
+    }));
   }
 }
