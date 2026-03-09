@@ -2,7 +2,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export type EventVisibility = 'public' | 'private';
@@ -11,14 +11,14 @@ export interface Organizer {
   id: number;
   email: string;
   name: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface Participant {
   id: number;
   email: string;
   name: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface Event {

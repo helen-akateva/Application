@@ -7,7 +7,7 @@ const validationSchema = yup.object({
         .string()
         .required("Title is required")
         .min(3, "Title must be at least 3 characters"),
-    description: yup.string().required("Description is required"),
+    description: yup.string().optional(),
     date: yup.string().required("Date is required"),
     time: yup.string().required("Time is required"),
     location: yup.string().required("Location is required"),
@@ -128,7 +128,7 @@ export default function EventForm({
                         htmlFor="description"
                         className="text-sm font-medium text-gray-700"
                     >
-                        Description <span className="text-red-500">*</span>
+                        Description
                     </label>
                     <textarea
                         id="description"
