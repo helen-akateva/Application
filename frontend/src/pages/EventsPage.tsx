@@ -12,6 +12,8 @@ import {
 import EventCard from "../components/EventCard";
 import Button from "../components/Button";
 
+const ITEMS_PER_PAGE = 6;
+
 export default function EventsPage() {
   const {
     events,
@@ -25,6 +27,7 @@ export default function EventsPage() {
   const { isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [joinedEventIds, setJoinedEventIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -85,6 +88,15 @@ export default function EventsPage() {
     );
   }, [events, search]);
 
+  const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE);
+
+  const paginatedEvents = useMemo(() => {
+    return filteredEvents.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE,
+    );
+  }, [filteredEvents, currentPage]);
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
       <header className="mb-6">
@@ -112,7 +124,10 @@ export default function EventsPage() {
           id="search-events"
           type="search"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
           placeholder="Search events..."
           className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100"
         />
@@ -161,19 +176,47 @@ export default function EventsPage() {
           </div>
         )}
 
-      {!isLoading && !error && filteredEvents.length > 0 && (
-        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredEvents.map((event) => (
-            <li key={event.id}>
-              <EventCard
-                event={event}
-                isJoined={joinedEventIds.has(event.id)}
-                isOrganizer={event.organizer.id === user?.id}
-                onJoinLeave={handleJoinLeave}
-              />
-            </li>
-          ))}
-        </ul>
+      {!isLoading && !error && paginatedEvents.length > 0 && (
+        <>
+          <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+            {paginatedEvents.map((event) => (
+              <li key={event.id} className="flex w-full">
+                <EventCard
+                  event={event}
+                  isJoined={joinedEventIds.has(event.id)}
+                  isOrganizer={event.organizer.id === user?.id}
+                  onJoinLeave={handleJoinLeave}
+                />
+              </li>
+            ))}
+          </ul>
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentPage((p) => p - 1)}
+                disabled={currentPage === 1}
+                className="text-gray-600 hover:text-gray-900 disabled:opacity-40"
+              >
+                ← Previous
+              </Button>
+              <span className="text-sm text-gray-500">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentPage((p) => p + 1)}
+                disabled={currentPage === totalPages}
+                className="text-gray-600 hover:text-gray-900 disabled:opacity-40"
+              >
+                Next →
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </main>
   );
