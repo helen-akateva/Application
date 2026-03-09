@@ -23,7 +23,6 @@ export const useAuthStore = create<AuthStore>()(
       // Full cleanup on logout
       logout: () => {
         set({ user: null, isAuthenticated: false });
-        localStorage.removeItem('auth-storage');
       },
     }),
     {

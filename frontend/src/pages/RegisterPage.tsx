@@ -37,7 +37,12 @@ export default function RegisterPage() {
       navigate("/");
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
-      setError(axiosError.response?.data?.message || "Something went wrong");
+      const data = axiosError.response?.data;
+      if (data?.errors?.length) {
+        setError(data.errors.join(", "));
+      } else {
+        setError(data?.message || "Registration failed");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -89,6 +94,7 @@ export default function RegisterPage() {
             type="password"
             name="password"
             placeholder="••••••••"
+            minLength={8}
             required
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100"
           />
@@ -104,11 +110,7 @@ export default function RegisterPage() {
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100"
           />
 
-          <Button
-            type="submit"
-            size="full"
-            isLoading={isLoading}
-          >
+          <Button type="submit" size="full" isLoading={isLoading}>
             Create account
           </Button>
         </form>

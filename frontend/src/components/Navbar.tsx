@@ -61,7 +61,7 @@ export default function Navbar() {
           {isAuthenticated && user ? (
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-semibold text-green-700">
-                {user.name.charAt(0).toUpperCase()}
+                {user.name?.charAt(0).toUpperCase() || "U"}
               </div>
               <span className="max-w-[120px] truncate">{user.name}</span>
               <button
@@ -147,7 +147,7 @@ export default function Navbar() {
             {isAuthenticated && user ? (
               <>
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-semibold text-green-700">
-                  {user.name.charAt(0).toUpperCase()}
+                  {user.name?.charAt(0).toUpperCase() || "U"}
                 </div>
                 <span className="max-w-[120px] truncate">{user.name}</span>
                 <button

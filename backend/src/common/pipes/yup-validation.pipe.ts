@@ -8,7 +8,7 @@ import { ValidationError, type AnyObjectSchema } from 'yup';
 
 @Injectable()
 export class YupValidationPipe implements PipeTransform {
-  constructor(private schema: AnyObjectSchema) { }
+  constructor(private schema: AnyObjectSchema) {}
 
   async transform(
     value: unknown,

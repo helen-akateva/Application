@@ -22,11 +22,11 @@ import type { EventListItem } from "../types";
 const MyEventsPage = () => {
   const { setError } = useEventsStore();
   const { user } = useAuthStore();
-
   const [myEvents, setMyEvents] = useState<EventListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<"month" | "week">("month");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadMyEvents = async () => {
@@ -37,7 +37,7 @@ const MyEventsPage = () => {
         setMyEvents(data);
       } catch (err) {
         console.error(err);
-        setError("Failed to load your events");
+        setLoadError("Failed to load your events");
       } finally {
         setIsLoading(false);
       }
@@ -52,6 +52,11 @@ const MyEventsPage = () => {
         <Loader2 className="h-8 w-8 animate-spin mr-2" />
         <span>Loading your calendar...</span>
       </div>
+    );
+  }
+  if (loadError) {
+    return (
+      <div className="flex justify-center py-20 text-red-500">{loadError}</div>
     );
   }
 
@@ -189,8 +194,7 @@ const MonthView = ({ currentDate, events }: ViewProps) => {
           const dayEvents = events
             .filter((e) => isSameDay(new Date(e.date), day))
             .sort(
-              (a, b) =>
-                new Date(a.date).getTime() - new Date(b.date).getTime(),
+              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
             );
           const isToday = isSameDay(day, today);
           const isCurrentMonth = format(day, "M") === format(currentDate, "M");
@@ -249,21 +253,24 @@ const WeekView = ({ currentDate, events }: ViewProps) => {
         return (
           <div
             key={day.toISOString()}
-            className={`flex flex-col rounded-xl border bg-white overflow-hidden transition-all min-h-[140px] ${isToday
-              ? "border-green-600 ring-1 ring-green-600 ring-opacity-30 shadow-md"
-              : "border-gray-100"
-              }`}
+            className={`flex flex-col rounded-xl border bg-white overflow-hidden transition-all min-h-[140px] ${
+              isToday
+                ? "border-green-600 ring-1 ring-green-600 ring-opacity-30 shadow-md"
+                : "border-gray-100"
+            }`}
           >
             <div className="p-2 text-left border-b border-gray-50">
               <div
-                className={`text-[10px] font-bold uppercase tracking-wide mb-0.5 ${isToday ? "text-green-600" : "text-gray-900"
-                  }`}
+                className={`text-[10px] font-bold uppercase tracking-wide mb-0.5 ${
+                  isToday ? "text-green-600" : "text-gray-900"
+                }`}
               >
                 {format(day, "EEE")}
               </div>
               <div
-                className={`text-lg font-bold ${isToday ? "text-green-600" : "text-gray-900"
-                  }`}
+                className={`text-lg font-bold ${
+                  isToday ? "text-green-600" : "text-gray-900"
+                }`}
               >
                 {format(day, "d")}
               </div>

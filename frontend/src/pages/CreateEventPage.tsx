@@ -30,7 +30,12 @@ export default function CreateEventPage() {
       navigate(`/events/${event.id}`);
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
-      setStatus(axiosError.response?.data?.message || "Something went wrong");
+      const data = axiosError.response?.data;
+      if (data?.errors?.length) {
+        setStatus(data.errors.join(", "));
+      } else {
+        setStatus(data?.message || "Something went wrong");
+      }
     } finally {
       setIsSubmitting(false);
     }

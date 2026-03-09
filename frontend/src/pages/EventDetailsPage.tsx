@@ -123,11 +123,11 @@ export default function EventDetailsPage() {
         setEvent((prev) =>
           prev
             ? {
-              ...prev,
-              participants: prev.participants.filter(
-                (p) => p.id !== user!.id,
-              ),
-            }
+                ...prev,
+                participants: prev.participants.filter(
+                  (p) => p.id !== user!.id,
+                ),
+              }
             : null,
         );
       } else {
@@ -135,12 +135,12 @@ export default function EventDetailsPage() {
         setEvent((prev) =>
           prev && user
             ? {
-              ...prev,
-              participants: [
-                ...prev.participants,
-                { ...user, createdAt: "" },
-              ],
-            }
+                ...prev,
+                participants: [
+                  ...prev.participants,
+                  { ...user, createdAt: "" },
+                ],
+              }
             : null,
         );
       }
@@ -148,7 +148,7 @@ export default function EventDetailsPage() {
       const axiosError = err as AxiosError<ApiError>;
       setActionError(
         axiosError.response?.data?.message ||
-        "Action failed. Please try again.",
+          "Action failed. Please try again.",
       );
     } finally {
       setActionLoading(false);
@@ -336,7 +336,9 @@ export default function EventDetailsPage() {
                 ? "Leave Event"
                 : isFull
                   ? "Event Full"
-                  : "Join This Event"}
+                  : !isAuthenticated
+                    ? "Login to Join"
+                    : "Join This Event"}
             </Button>
           </footer>
         )}
@@ -349,13 +351,8 @@ export default function EventDetailsPage() {
         className="m-auto rounded-2xl p-0 shadow-2xl backdrop:bg-gray-900/60 backdrop:backdrop-blur-sm animate-in fade-in zoom-in duration-200"
       >
         <div className="w-full max-w-sm p-8 bg-white">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
-            Delete Event?
-          </h2>
-          <p className="text-gray-500 mb-8 leading-relaxed">
-            This will permanently remove{" "}
-            <span className="font-semibold text-gray-900">"{event.title}"</span>
-            . All participant data will be lost.
+          <p className="text-lg font-medium text-gray-900 mb-8 leading-relaxed text-center">
+            Are you sure you want to delete this event?
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button

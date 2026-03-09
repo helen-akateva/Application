@@ -78,9 +78,14 @@ export class EventsService {
       throw new NotFoundException('User not found');
     }
 
+    const eventDate = new Date(dto.date);
+    if (eventDate < new Date()) {
+      throw new BadRequestException('Cannot create events in the past');
+    }
+
     const event = this.eventsRepository.create({
       ...dto,
-      date: new Date(dto.date),
+      date: eventDate,
       organizer: user,
     });
 

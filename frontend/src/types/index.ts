@@ -1,25 +1,15 @@
-export interface User {
+export interface BaseUser {
   id: number;
   email: string;
   name: string;
   createdAt?: string;
 }
+
+export type User = BaseUser;
+export type Organizer = BaseUser;
+export type Participant = BaseUser;
 
 export type EventVisibility = 'public' | 'private';
-
-export interface Organizer {
-  id: number;
-  email: string;
-  name: string;
-  createdAt?: string;
-}
-
-export interface Participant {
-  id: number;
-  email: string;
-  name: string;
-  createdAt?: string;
-}
 
 export interface Event {
   id: number;
@@ -70,4 +60,5 @@ export interface AuthResponse {
 export interface ApiError {
   message: string;
   statusCode: number;
+  errors?: string[];
 }
