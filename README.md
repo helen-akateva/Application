@@ -2,13 +2,20 @@
 
 A full-stack event management application built with React, NestJS, and PostgreSQL.
 
+## 🚀 Live Demo
+
+- **Frontend**: https://carefree-serenity-production.up.railway.app
+- **Backend API**: https://application-production-79a2.up.railway.app
+- **Swagger Docs**: https://application-production-79a2.up.railway.app/api/docs
+
 ## Tech Stack
 
 - **Frontend**: React + TypeScript + Vite + Tailwind CSS
 - **Backend**: NestJS + TypeScript + TypeORM
 - **Database**: PostgreSQL
-- **Auth**: JWT
+- **Auth**: JWT (HTTP-only cookies)
 - **Containerization**: Docker + docker-compose
+- **Deployment**: Railway
 
 ## Prerequisites
 
@@ -25,14 +32,14 @@ Then open:
 
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3000
-- **Swagger docs**: http://localhost:3000/api
+- **Swagger docs**: http://localhost:3000/api/docs
 
 ## Setup Steps
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/Application.git
+git clone https://github.com/helen-akateva/Application.git
 cd Application
 ```
 
@@ -103,7 +110,10 @@ Application/
 
 ## API Documentation
 
-Swagger UI is available at: http://localhost:3000/api
+Swagger UI is available at:
+
+- **Local**: http://localhost:3000/api/docs
+- **Production**: https://application-production-79a2.up.railway.app/api/docs
 
 ## Database Schema
 
