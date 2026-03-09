@@ -70,31 +70,31 @@ docker-compose down -v
 
 ## Default Seed Accounts
 
-After first launch, the database is seeded with sample data:
-
-| Email             | Password    | Role |
-| ----------------- | ----------- | ---- |
-| user1@example.com | password123 | User |
-| user2@example.com | password123 | User |
+| Email              | Password     | Name          |
+| ------------------ | ------------ | ------------- |
+| oksana@example.com | Password123! | Oksana Melnyk |
+| dmytro@example.com | Password456! | Dmytro Koval  |
 
 ## Project Structure
 
 ```
 Application/
-├── frontend/          # React + Vite app
-│   ├── src/
-│   │   ├── api/       # API calls
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── store/     # State management
-│   │   └── types/
-│   └── Dockerfile
-├── backend/           # NestJS app
+├── backend/
 │   ├── src/
 │   │   ├── auth/
 │   │   ├── events/
 │   │   ├── users/
 │   │   └── common/
+│   ├── .env.example
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── store/
+│   │   └── types/
+│   ├── .env.example
 │   └── Dockerfile
 ├── docker-compose.yml
 ├── .env.example
