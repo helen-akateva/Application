@@ -1,13 +1,13 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './store/authStore';
-import EventsPage from './pages/EventsPage';
-import EventDetailsPage from './pages/EventDetailsPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import CreateEventPage from './pages/CreateEventPage';
-import MyEventsPage from './pages/MyEventsPage';
-import EditEventPage from './pages/EditEventPage';
-import Navbar from './components/Navbar';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuthStore } from "./store/authStore";
+import EventsPage from "./pages/EventsPage";
+import EventDetailsPage from "./pages/EventDetailsPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import CreateEventPage from "./pages/CreateEventPage";
+import MyEventsPage from "./pages/MyEventsPage";
+import EditEventPage from "./pages/EditEventPage";
+import Navbar from "./components/Navbar";
 
 // Secure route — only for logged in users
 function ProtectedRoute({ children }: { children: React.ReactNode }) {

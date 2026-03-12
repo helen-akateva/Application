@@ -1,6 +1,10 @@
+import { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
-import type { EventVisibility } from "../types";
+import type { EventVisibility, Tag } from "../types";
+import { createTag } from "../api/tags";
+import { AxiosError } from "axios";
+import type { ApiError } from "../types";
 
 const validationSchema = yup.object({
   title: yup
@@ -27,6 +31,7 @@ export interface EventFormValues {
   location: string;
   capacity: string;
   visibility: EventVisibility;
+  tagIds: number[];
 }
 
 import Button from "./Button";
@@ -38,6 +43,8 @@ interface EventFormProps {
   isSubmitting: boolean;
   status?: string;
   onCancel: () => void;
+  availableTags: Tag[];
+  onTagCreated?: (tag: Tag) => void;
 }
 
 export default function EventForm({
@@ -47,7 +54,18 @@ export default function EventForm({
   isSubmitting,
   status,
   onCancel,
+  availableTags,
+  onTagCreated,
 }: EventFormProps) {
+  const [localTags, setLocalTags] = useState<Tag[]>([]);
+  const [newTagName, setNewTagName] = useState("");
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
+  const [tagError, setTagError] = useState("");
+
+  useEffect(() => {
+    setLocalTags(availableTags);
+  }, [availableTags]);
+
   const formik = useFormik<EventFormValues>({
     initialValues: {
       title: initialValues?.title || "",
@@ -57,6 +75,7 @@ export default function EventForm({
       location: initialValues?.location || "",
       capacity: initialValues?.capacity || "",
       visibility: initialValues?.visibility || "public",
+      tagIds: initialValues?.tagIds ?? [],
     },
     validationSchema,
     enableReinitialize: true,
@@ -74,6 +93,44 @@ export default function EventForm({
       onSubmit(values);
     },
   });
+
+  const handleCreateTag = async () => {
+    const trimmed = newTagName.trim();
+    if (!trimmed) return;
+
+    const current = formik.values.tagIds ?? [];
+    if (current.length >= 5) {
+      setTagError("Maximum 5 tags allowed");
+      return;
+    }
+
+    const existing = localTags.find(
+      (t) => t.name.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (existing) {
+      if (!current.includes(existing.id)) {
+        formik.setFieldValue("tagIds", [...current, existing.id]);
+      }
+      setNewTagName("");
+      setTagError("");
+      return;
+    }
+
+    setIsCreatingTag(true);
+    setTagError("");
+    try {
+      const newTag = await createTag(trimmed);
+      setLocalTags((prev) => [...prev, newTag]);
+      formik.setFieldValue("tagIds", [...current, newTag.id]);
+      setNewTagName("");
+      onTagCreated?.(newTag);
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiError>;
+      setTagError(axiosError.response?.data?.message || "Failed to create tag");
+    } finally {
+      setIsCreatingTag(false);
+    }
+  };
 
   const today = new Date().toISOString().split("T")[0];
   const minTime =
@@ -251,6 +308,86 @@ export default function EventForm({
             </label>
           </div>
         </fieldset>
+        {/* Tags */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-gray-700">
+            Tags{" "}
+            <span className="text-gray-400 font-normal">(optional, max 5)</span>
+          </label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {localTags.map((tag) => {
+              const isSelected = formik.values.tagIds?.includes(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => {
+                    const current = formik.values.tagIds ?? [];
+                    if (isSelected) {
+                      formik.setFieldValue(
+                        "tagIds",
+                        current.filter((id) => id !== tag.id),
+                      );
+                    } else if (current.length < 5) {
+                      formik.setFieldValue("tagIds", [...current, tag.id]);
+                    }
+                  }}
+                  className={`rounded-full px-3 py-1 text-sm font-medium border transition-all ${
+                    isSelected
+                      ? "text-white border-transparent"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+                  }`}
+                  style={
+                    isSelected
+                      ? {
+                          backgroundColor: tag.color ?? "#6b7280",
+                          borderColor: tag.color ?? "#6b7280",
+                        }
+                      : {}
+                  }
+                >
+                  {tag.name}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex gap-2 items-center">
+            <input
+              type="text"
+              placeholder="Add new tag"
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleCreateTag();
+                }
+              }}
+              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-100"
+              disabled={
+                isCreatingTag || (formik.values.tagIds?.length ?? 0) >= 5
+              }
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCreateTag}
+              isLoading={isCreatingTag}
+              disabled={
+                (formik.values.tagIds?.length ?? 0) >= 5 || !newTagName.trim()
+              }
+            >
+              Add
+            </Button>
+          </div>
+
+          {(formik.values.tagIds?.length ?? 0) >= 5 && (
+            <p className="text-xs text-amber-500">Maximum 5 tags selected</p>
+          )}
+          {tagError && <p className="text-xs text-red-500">{tagError}</p>}
+        </div>
 
         {/* Form Actions */}
         <footer className="flex gap-4 pt-6">

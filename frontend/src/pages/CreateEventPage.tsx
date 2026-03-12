@@ -1,22 +1,29 @@
 import { useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { createEvent } from "../api/events";
+import { fetchTags } from "../api/tags";
 import { AxiosError } from "axios";
-import type { ApiError } from "../types";
+import type { ApiError, Tag } from "../types";
 import EventForm, { type EventFormValues } from "../components/EventForm";
 
 export default function CreateEventPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<string | undefined>(undefined);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+
+  useEffect(() => {
+    fetchTags()
+      .then(setAvailableTags)
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (values: EventFormValues) => {
     setIsSubmitting(true);
     setStatus(undefined);
     try {
       const isoDate = new Date(`${values.date}T${values.time}`).toISOString();
-
       const payload = {
         title: values.title,
         description: values.description || undefined,
@@ -24,8 +31,8 @@ export default function CreateEventPage() {
         location: values.location,
         capacity: values.capacity ? Number(values.capacity) : undefined,
         visibility: values.visibility,
+        tagIds: values.tagIds,
       };
-
       const event = await createEvent(payload);
       navigate(`/events/${event.id}`);
     } catch (err) {
@@ -52,7 +59,6 @@ export default function CreateEventPage() {
           Back to events
         </Link>
       </nav>
-
       <section className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
           Create New Event
@@ -61,13 +67,14 @@ export default function CreateEventPage() {
           Fill in the details to publish your event to the community
         </p>
       </section>
-
       <EventForm
         onSubmit={handleSubmit}
         onCancel={() => navigate("/")}
         submitLabel="Create Event"
         isSubmitting={isSubmitting}
         status={status}
+        availableTags={availableTags}
+        onTagCreated={(tag) => setAvailableTags((prev) => [...prev, tag])}
       />
     </main>
   );

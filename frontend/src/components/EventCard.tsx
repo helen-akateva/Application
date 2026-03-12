@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
 import { AxiosError } from "axios";
 import type { EventListItem, ApiError } from "../types";
+import { TagChip } from "./TagChip";
 
 interface EventCardProps {
   event: EventListItem;
@@ -40,7 +41,6 @@ export default function EventCard({
     e.stopPropagation();
     setIsLoading(true);
     setError(null);
-
     try {
       await onJoinLeave(event.id, isJoined);
     } catch (err) {
@@ -52,7 +52,7 @@ export default function EventCard({
   };
 
   return (
-    <article className= "relative flex w-full flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md h-[280px]">
+    <article className="relative flex w-full flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md h-[300px]">
       <header className="mb-3 min-h-[80px]">
         <h3 className="text-base font-semibold text-gray-900 line-clamp-1">
           <Link
@@ -65,6 +65,14 @@ export default function EventCard({
         <p className="mt-1 min-h-[40px] text-sm text-gray-500 line-clamp-2">
           {event.description ?? ""}
         </p>
+        {/* ← теги */}
+        {event.tags?.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {event.tags.map((tag) => (
+              <TagChip key={tag.id} tag={tag} size="sm" />
+            ))}
+          </div>
+        )}
       </header>
 
       <section className="flex-1">
@@ -93,7 +101,6 @@ export default function EventCard({
 
       <footer className="relative z-10 mt-4">
         {error && <p className="mb-2 text-xs text-red-500">{error}</p>}
-
         {isOrganizer ? (
           <div className="w-full rounded-lg border border-gray-200 py-2 text-center text-sm font-medium text-gray-400">
             Your Event
@@ -109,7 +116,6 @@ export default function EventCard({
           <button
             onClick={handleJoinLeave}
             disabled={isLoading}
-            aria-disabled={isLoading}
             className={`w-full rounded-lg py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
               isJoined
                 ? "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"

@@ -216,7 +216,14 @@ const MonthView = ({ currentDate, events }: ViewProps) => {
                   <Link
                     key={e.id}
                     to={`/events/${e.id}`}
-                    className="block px-1 py-0.5 bg-green-50 border-l-2 border-green-500 rounded text-[8px] group transition-all hover:bg-green-100 truncate font-medium text-green-800"
+                    className="block px-1 py-0.5 rounded text-[8px] group transition-all truncate font-medium border-l-2"
+                    style={{
+                      backgroundColor: e.tags?.[0]?.color
+                        ? `${e.tags[0].color}15`
+                        : "#f0fdf4",
+                      borderLeftColor: e.tags?.[0]?.color ?? "#16a34a",
+                      color: e.tags?.[0]?.color ?? "#166534",
+                    }}
                   >
                     {format(new Date(e.date), "HH:mm")} {e.title}
                   </Link>
@@ -281,9 +288,20 @@ const WeekView = ({ currentDate, events }: ViewProps) => {
                   <Link
                     key={e.id}
                     to={`/events/${e.id}`}
-                    className="block p-2 bg-green-50/50 border border-green-100 rounded-lg hover:bg-green-100 transition-all group"
+                    className="block p-2 rounded-lg transition-all group border"
+                    style={{
+                      backgroundColor: e.tags?.[0]?.color
+                        ? `${e.tags[0].color}15`
+                        : "#f0fdf4",
+                      borderColor: e.tags?.[0]?.color
+                        ? `${e.tags[0].color}40`
+                        : "#dcfce7",
+                    }}
                   >
-                    <div className="text-[9px] font-bold text-green-600 mb-0.5">
+                    <div
+                      className="text-[9px] font-bold mb-0.5"
+                      style={{ color: e.tags?.[0]?.color ?? "#16a34a" }}
+                    >
                       {format(new Date(e.date), "HH:mm")}
                     </div>
                     <div className="text-[10px] font-bold text-gray-800 leading-tight line-clamp-1">

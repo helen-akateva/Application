@@ -9,8 +9,10 @@ import {
   joinEvent,
   leaveEvent,
 } from "../api/events";
+import { fetchTags } from "../api/tags";
 import EventCard from "../components/EventCard";
 import Button from "../components/Button";
+import type { Tag } from "../types";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -29,15 +31,20 @@ export default function EventsPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [joinedEventIds, setJoinedEventIds] = useState<Set<number>>(new Set());
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]); // ← додати
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]); // ← додати
 
   useEffect(() => {
     const loadEvents = async () => {
       setLoading(true);
       setError(null);
-
       try {
-        const data = await fetchEvents();
+        const [data, tags] = await Promise.all([
+          fetchEvents(),
+          fetchTags(), // ← завантажуємо теги разом з подіями
+        ]);
         setEvents(data);
+        setAvailableTags(tags);
 
         if (isAuthenticated) {
           const userEvents = await fetchUserEvents();
@@ -51,7 +58,6 @@ export default function EventsPage() {
         setLoading(false);
       }
     };
-
     loadEvents();
   }, [isAuthenticated, setEvents, setLoading, setError]);
 
@@ -60,7 +66,6 @@ export default function EventsPage() {
       navigate("/login");
       return;
     }
-
     if (currentlyJoined) {
       await leaveEvent(eventId);
       updateEventParticipantCount(eventId, -1);
@@ -76,26 +81,50 @@ export default function EventsPage() {
     }
   };
 
-  const filteredEvents = useMemo(() => {
-    const query = search.toLowerCase().trim();
-    if (!query) return events;
-
-    return events.filter(
-      (event) =>
-        event.title.toLowerCase().includes(query) ||
-        event.location.toLowerCase().includes(query) ||
-        event.description?.toLowerCase().includes(query),
+  // ← toggle тегу у фільтрі
+  const toggleTag = (tagId: number) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId],
     );
-  }, [events, search]);
+    setCurrentPage(1);
+  };
+
+  const filteredEvents = useMemo(() => {
+    let result = events;
+
+    // фільтр по тексту
+    const query = search.toLowerCase().trim();
+    if (query) {
+      result = result.filter(
+        (e) =>
+          e.title.toLowerCase().includes(query) ||
+          e.location.toLowerCase().includes(query) ||
+          e.description?.toLowerCase().includes(query),
+      );
+    }
+
+    // ← фільтр по тегах
+    if (selectedTagIds.length > 0) {
+      result = result.filter((e) =>
+        e.tags?.some((tag) => selectedTagIds.includes(tag.id)),
+      );
+    }
+
+    return result;
+  }, [events, search, selectedTagIds]);
 
   const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE);
-
   const paginatedEvents = useMemo(() => {
     return filteredEvents.slice(
       (currentPage - 1) * ITEMS_PER_PAGE,
       currentPage * ITEMS_PER_PAGE,
     );
   }, [filteredEvents, currentPage]);
+
+  const noResults =
+    !isLoading && !error && events.length > 0 && filteredEvents.length === 0;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
@@ -108,9 +137,10 @@ export default function EventsPage() {
         </p>
       </header>
 
+      {/* Search */}
       <form
         role="search"
-        className="relative mb-6 max-w-sm"
+        className="relative mb-4 max-w-sm"
         onSubmit={(e) => e.preventDefault()}
       >
         <label htmlFor="search-events" className="sr-only">
@@ -132,6 +162,42 @@ export default function EventsPage() {
           className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100"
         />
       </form>
+
+      {/* ← Tag filter */}
+      {availableTags.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {availableTags.map((tag) => {
+            const isSelected = selectedTagIds.includes(tag.id);
+            return (
+              <button
+                key={tag.id}
+                onClick={() => toggleTag(tag.id)}
+                className={`rounded-full px-3 py-1 text-sm font-medium border transition-all ${
+                  isSelected
+                    ? "text-white border-transparent"
+                    : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+                }`}
+                style={
+                  isSelected ? { backgroundColor: tag.color ?? "#6b7280" } : {}
+                }
+              >
+                {tag.name}
+              </button>
+            );
+          })}
+          {selectedTagIds.length > 0 && (
+            <button
+              onClick={() => {
+                setSelectedTagIds([]);
+                setCurrentPage(1);
+              }}
+              className="rounded-full px-3 py-1 text-sm text-gray-400 hover:text-gray-600 border border-dashed border-gray-300"
+            >
+              Clear filters ✕
+            </button>
+          )}
+        </div>
+      )}
 
       {isLoading && (
         <div className="flex items-center justify-center gap-2 py-20 text-sm text-gray-400">
@@ -155,26 +221,30 @@ export default function EventsPage() {
         </div>
       )}
 
-      {!isLoading &&
-        !error &&
-        events.length > 0 &&
-        filteredEvents.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="font-medium text-gray-700">No events found</p>
-            <p className="mt-1 text-sm text-gray-400">
-              Try a different search term.
-            </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSearch("")}
-              aria-label="Clear search and show all events"
-              className="mt-3 text-green-600 hover:text-green-700"
-            >
-              Clear search
-            </Button>
-          </div>
-        )}
+      {/* ← Empty state для тег-фільтру */}
+      {noResults && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="font-medium text-gray-700">
+            {selectedTagIds.length > 0
+              ? "No events match the selected tags."
+              : "No events found"}
+          </p>
+          <p className="mt-1 text-sm text-gray-400">
+            Try a different search term or filter.
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearch("");
+              setSelectedTagIds([]);
+            }}
+            className="mt-3 text-green-600 hover:text-green-700"
+          >
+            Clear all filters
+          </Button>
+        </div>
+      )}
 
       {!isLoading && !error && paginatedEvents.length > 0 && (
         <>

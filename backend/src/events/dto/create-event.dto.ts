@@ -23,4 +23,7 @@ export class CreateEventDto {
     enum: Object.values(EVENT_VISIBILITY),
   })
   visibility: EventVisibility;
+
+  @ApiPropertyOptional({ example: [1, 2], type: [Number] })
+  tagIds?: number[];
 }

@@ -5,11 +5,17 @@ export interface BaseUser {
   createdAt?: string;
 }
 
+export interface Tag {
+  id: number;
+  name: string;
+  color?: string;
+}
+
 export type User = BaseUser;
 export type Organizer = BaseUser;
 export type Participant = BaseUser;
 
-export type EventVisibility = 'public' | 'private';
+export type EventVisibility = "public" | "private";
 
 export interface Event {
   id: number;
@@ -22,14 +28,15 @@ export interface Event {
   organizer: Organizer;
   createdAt: string;
   updatedAt: string;
+  tags: Tag[];
 }
 
-// GET /events 
+// GET /events
 export interface EventListItem extends Event {
   participantsCount: number;
 }
 
-// GET /events/:id 
+// GET /events/:id
 export interface EventDetails extends Event {
   participants: Participant[];
 }
@@ -41,6 +48,7 @@ export interface CreateEventPayload {
   location: string;
   capacity?: number;
   visibility: EventVisibility;
+  tagIds?: number[];
 }
 
 export interface UpdateEventPayload {
@@ -50,6 +58,7 @@ export interface UpdateEventPayload {
   location?: string;
   capacity?: number;
   visibility?: EventVisibility;
+  tagIds?: number[];
 }
 
 export interface AuthResponse {

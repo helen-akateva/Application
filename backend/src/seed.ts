@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
 import { User } from './users/user.entity';
 import { Event, EVENT_VISIBILITY } from './events/event.entity';
+import { Tag } from './tags/tag.entity';
 
 dotenv.config();
 
@@ -14,7 +15,7 @@ async function seed() {
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_NAME || 'event_management',
-    entities: [User, Event],
+    entities: [User, Event, Tag],
     synchronize: true,
   });
 
@@ -23,6 +24,7 @@ async function seed() {
 
   const userRepo = dataSource.getRepository(User);
   const eventRepo = dataSource.getRepository(Event);
+  const tagRepo = dataSource.getRepository(Tag);
 
   const existingUsers = await userRepo.count();
   if (existingUsers > 0) {
@@ -31,6 +33,21 @@ async function seed() {
     return;
   }
 
+  const tagsData = [
+    { name: 'Tech', color: '#3B82F6' },
+    { name: 'Art', color: '#EC4899' },
+    { name: 'Business', color: '#F59E0B' },
+    { name: 'Music', color: '#8B5CF6' },
+    { name: 'Sport', color: '#10B981' },
+    { name: 'Food', color: '#EF4444' },
+    { name: 'Design', color: '#06B6D4' },
+  ];
+
+  const tags = tagRepo.create(tagsData);
+  const savedTags = await tagRepo.save(tags);
+  console.log('Created 7 tags');
+
+  const tagMap = Object.fromEntries(savedTags.map((t) => [t.name, t]));
   const password1 = await bcrypt.hash('Password123!', 10);
   const password2 = await bcrypt.hash('Password456!', 10);
 
@@ -61,6 +78,7 @@ async function seed() {
     visibility: EVENT_VISIBILITY.PUBLIC,
     organizer: user1,
     participants: [user2],
+    tags: [tagMap['Sport']],
   });
 
   const event2 = eventRepo.create({
@@ -73,6 +91,7 @@ async function seed() {
     visibility: EVENT_VISIBILITY.PUBLIC,
     organizer: user2,
     participants: [user1],
+    tags: [tagMap['Art'], tagMap['Design']],
   });
 
   const event3 = eventRepo.create({
@@ -85,6 +104,7 @@ async function seed() {
     visibility: EVENT_VISIBILITY.PUBLIC,
     organizer: user1,
     participants: [],
+    tags: [tagMap['Food']],
   });
 
   await eventRepo.save([event1, event2, event3]);

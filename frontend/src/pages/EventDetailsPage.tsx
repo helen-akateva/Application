@@ -19,6 +19,7 @@ import {
 } from "../api/events";
 import type { EventDetails, ApiError } from "../types";
 import Button from "../components/Button";
+import { TagChip } from "../components/TagChip";
 
 export default function EventDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -220,6 +221,14 @@ export default function EventDetailsPage() {
             <p className="mt-4 text-lg text-gray-600 leading-relaxed">
               {event.description}
             </p>
+          )}
+
+          {event.tags?.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {event.tags.map((tag) => (
+                <TagChip key={tag.id} tag={tag} size="md" />
+              ))}
+            </div>
           )}
         </header>
 
