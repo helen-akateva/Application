@@ -1,18 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import { useAiStore } from "../store/aiStore";
 import { askAI } from "../api/ai";
-import { Loader2, Send, Bot, User } from "lucide-react";
+import { Loader2, Send, Bot, } from "lucide-react";
 import { AxiosError } from "axios";
 import type { ApiError } from "../types";
 import Button from "../components/Button";
+import { useAuthStore } from "../store/authStore";
 
 export default function AiAssistantPage() {
   const { messages, isLoading, addMessage, setLoading, clearMessages } =
     useAiStore();
+  const { user } = useAuthStore();
   const [question, setQuestion] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null); // ← автоскрол
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // ← автоскрол до останнього повідомлення
+  // auto scroll to last message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -91,13 +93,13 @@ export default function AiAssistantPage() {
       {/* Messages */}
       {messages.length > 0 && (
         <section aria-labelledby="chat-history-heading">
-          {/* ← прихований заголовок для скрінрідерів */}
+          {/* hidden title for screen readers */}
           <h2 id="chat-history-heading" className="sr-only">
             Chat history
           </h2>
 
           <ul
-            aria-live="polite" // ← скрінрідер озвучує нові повідомлення
+            aria-live="polite" // screen reader announces new messages
             className="mb-4 space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm max-h-[400px] overflow-y-auto"
           >
             {messages.map((msg, i) => (
@@ -123,11 +125,8 @@ export default function AiAssistantPage() {
                   {msg.text}
                 </div>
                 {msg.role === "user" && (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-200">
-                    <User
-                      className="h-4 w-4 text-gray-600"
-                      aria-hidden="true"
-                    />
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-semibold text-green-700">
+                    {user?.name?.charAt(0).toUpperCase() || "U"}
                   </div>
                 )}
               </li>
@@ -144,7 +143,7 @@ export default function AiAssistantPage() {
                 </div>
               </li>
             )}
-            {/* ← якір для автоскролу */}
+            {/* anchor for auto scrolling */}
             <div ref={messagesEndRef} />
           </ul>
         </section>

@@ -28,9 +28,9 @@ export const useAiStore = create<AiStore>()(
       clearMessages: () => set({ messages: [] }),
     }),
     {
-      name: 'ai-chat-history', // ← зберігається в localStorage
+      name: 'ai-chat-history',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ messages: state.messages }), // ← isLoading не зберігаємо
+      partialize: (state) => ({ messages: state.messages }),
     },
   ),
 );

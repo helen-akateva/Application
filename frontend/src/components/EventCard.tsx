@@ -65,7 +65,7 @@ export default function EventCard({
         <p className="mt-1 min-h-[40px] text-sm text-gray-500 line-clamp-2">
           {event.description ?? ""}
         </p>
-        {/* ← теги */}
+        {/* tags */}
         {event.tags?.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {event.tags.map((tag) => (

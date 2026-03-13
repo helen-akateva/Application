@@ -6,15 +6,17 @@ import { Tag } from './tag.entity';
 import { CreateTagDto } from './dto/create-tag.dto';
 
 const COLORS = [
-  '#3B82F6',
-  '#EC4899',
-  '#F59E0B',
+  '#F43F5E',
   '#8B5CF6',
-  '#10B981',
-  '#EF4444',
   '#06B6D4',
+  '#84CC16',
   '#F97316',
-]; // ← додати
+  '#14B8A6',
+  '#6366F1',
+  '#EAB308',
+  '#EC4899',
+  '#22C55E',
+];
 
 @Injectable()
 export class TagsService {
@@ -43,12 +45,12 @@ export class TagsService {
       throw new BadRequestException('Tag with this name already exists');
     }
 
-    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)]; // ← додати
+    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
 
     const tag = this.tagsRepository.create({
       ...dto,
       name: normalized,
-      color: dto.color ?? randomColor, // ← додати
+      color: dto.color ?? randomColor,
     });
     return this.tagsRepository.save(tag);
   }

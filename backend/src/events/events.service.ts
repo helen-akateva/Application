@@ -36,8 +36,9 @@ export class EventsService {
 
     return events.map(({ participants, organizer, ...event }) => ({
       ...event,
-      organizer: sanitizeUser(organizer),
-      participantsCount: participants.length,
+      organizer: sanitizeUser(organizer) as User,
+      participants: (participants || []).map((p) => sanitizeUser(p) as User),
+      participantsCount: participants?.length || 0,
     }));
   }
 
@@ -80,6 +81,10 @@ export class EventsService {
       throw new NotFoundException('User not found');
     }
 
+    if (dto.tagIds && dto.tagIds.length > 5) {
+      throw new BadRequestException('Maximum 5 tags allowed');
+    }
+
     const eventDate = new Date(dto.date);
     if (eventDate < new Date()) {
       throw new BadRequestException('Cannot create events in the past');
@@ -117,6 +122,10 @@ export class EventsService {
 
     if (event.organizer.id !== userId) {
       throw new ForbiddenException('You are not the organizer of this event');
+    }
+
+    if (dto.tagIds && dto.tagIds.length > 5) {
+      throw new BadRequestException('Maximum 5 tags allowed');
     }
 
     if (dto.capacity !== undefined) {

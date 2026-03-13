@@ -31,18 +31,17 @@ export default function EventsPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [joinedEventIds, setJoinedEventIds] = useState<Set<number>>(new Set());
-  const [availableTags, setAvailableTags] = useState<Tag[]>([]); // ← додати
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]); // ← додати
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [showAllTags, setShowAllTags] = useState(false);
+  const MAX_VISIBLE_TAGS = 10;
 
   useEffect(() => {
     const loadEvents = async () => {
       setLoading(true);
       setError(null);
       try {
-        const [data, tags] = await Promise.all([
-          fetchEvents(),
-          fetchTags(), // ← завантажуємо теги разом з подіями
-        ]);
+        const [data, tags] = await Promise.all([fetchEvents(), fetchTags()]);
         setEvents(data);
         setAvailableTags(tags);
 
@@ -81,7 +80,7 @@ export default function EventsPage() {
     }
   };
 
-  // ← toggle тегу у фільтрі
+  // toggle tag in filter
   const toggleTag = (tagId: number) => {
     setSelectedTagIds((prev) =>
       prev.includes(tagId)
@@ -94,7 +93,7 @@ export default function EventsPage() {
   const filteredEvents = useMemo(() => {
     let result = events;
 
-    // фільтр по тексту
+    // text filter
     const query = search.toLowerCase().trim();
     if (query) {
       result = result.filter(
@@ -105,7 +104,7 @@ export default function EventsPage() {
       );
     }
 
-    // ← фільтр по тегах
+    // filter by tags
     if (selectedTagIds.length > 0) {
       result = result.filter((e) =>
         e.tags?.some((tag) => selectedTagIds.includes(tag.id)),
@@ -163,39 +162,60 @@ export default function EventsPage() {
         />
       </form>
 
-      {/* ← Tag filter */}
+      {/* Tag filter */}
       {availableTags.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-2">
-          {availableTags.map((tag) => {
-            const isSelected = selectedTagIds.includes(tag.id);
-            return (
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {(showAllTags
+              ? availableTags
+              : availableTags.slice(0, MAX_VISIBLE_TAGS)
+            ).map((tag) => {
+              const isSelected = selectedTagIds.includes(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  onClick={() => toggleTag(tag.id)}
+                  className={`rounded-full px-3 py-1 text-sm font-medium border transition-all ${
+                    isSelected
+                      ? "text-white border-transparent"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+                  }`}
+                  style={
+                    isSelected
+                      ? { backgroundColor: tag.color ?? "#6b7280" }
+                      : {}
+                  }
+                >
+                  {tag.name}
+                </button>
+              );
+            })}
+
+            {/* Show more/less */}
+            {availableTags.length > MAX_VISIBLE_TAGS && (
               <button
-                key={tag.id}
-                onClick={() => toggleTag(tag.id)}
-                className={`rounded-full px-3 py-1 text-sm font-medium border transition-all ${
-                  isSelected
-                    ? "text-white border-transparent"
-                    : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
-                }`}
-                style={
-                  isSelected ? { backgroundColor: tag.color ?? "#6b7280" } : {}
-                }
+                onClick={() => setShowAllTags((prev) => !prev)}
+                className="rounded-full px-3 py-1 text-sm text-gray-400 hover:text-gray-600 border border-dashed border-gray-300"
               >
-                {tag.name}
+                {showAllTags
+                  ? `Show less ↑`
+                  : `+${availableTags.length - MAX_VISIBLE_TAGS} more`}
               </button>
-            );
-          })}
-          {selectedTagIds.length > 0 && (
-            <button
-              onClick={() => {
-                setSelectedTagIds([]);
-                setCurrentPage(1);
-              }}
-              className="rounded-full px-3 py-1 text-sm text-gray-400 hover:text-gray-600 border border-dashed border-gray-300"
-            >
-              Clear filters ✕
-            </button>
-          )}
+            )}
+
+            {/* Clear filters */}
+            {selectedTagIds.length > 0 && (
+              <button
+                onClick={() => {
+                  setSelectedTagIds([]);
+                  setCurrentPage(1);
+                }}
+                className="rounded-full px-3 py-1 text-sm text-gray-400 hover:text-gray-600 border border-dashed border-gray-300"
+              >
+                Clear filters ✕
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -221,7 +241,7 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* ← Empty state для тег-фільтру */}
+      {/* Empty state for tag filter */}
       {noResults && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <p className="font-medium text-gray-700">

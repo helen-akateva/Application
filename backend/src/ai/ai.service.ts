@@ -8,9 +8,10 @@ interface EventSnapshot {
   date: Date;
   location: string;
   tags: string[];
-  role: 'organizer' | 'participant';
+  role: 'organizer' | 'participant' | 'none';
   participantsCount: number;
   participants: string[];
+  isPublic: boolean;
 }
 
 interface GroqResponse {
@@ -25,28 +26,67 @@ export class AiService {
   ) {}
 
   async ask(question: string, userId: number): Promise<string> {
-    const userEvents = await this.eventsService.getUserEvents(userId);
+    const [userEvents, allPublicEvents] = await Promise.all([
+      this.eventsService.getUserEvents(userId),
+      this.eventsService.findAll(),
+    ]);
+
+    // User event IDs to avoid duplication
+    const userEventIds = new Set(userEvents.map((e) => e.id));
+
+    // Public events the user is not participating in
+    const publicOnlyEvents = allPublicEvents.filter(
+      (e) => !userEventIds.has(e.id),
+    );
+
     const today = new Date().toISOString();
 
-    const snapshot: EventSnapshot[] = userEvents.map((e) => ({
-      id: e.id,
-      title: e.title,
-      date: e.date,
-      location: e.location,
-      tags: (e.tags ?? []).map((t) => t.name),
-      role: e.organizer?.id === userId ? 'organizer' : 'participant',
-      participantsCount: e.participantsCount ?? e.participants?.length ?? 0,
-      participants: (e.participants ?? []).map((p) => p.name),
-    }));
+    const snapshot: EventSnapshot[] = [
+      // Personal user events
+      ...userEvents.map((e) => ({
+        id: e.id,
+        title: e.title,
+        date: e.date,
+        location: e.location,
+        tags: (e.tags ?? []).map((t) => t.name),
+        role:
+          e.organizer?.id === userId
+            ? ('organizer' as const)
+            : ('participant' as const),
+        participantsCount: e.participantsCount ?? e.participants?.length ?? 0,
+        participants: (e.participants ?? []).map((p) => p.name),
+        isPublic: true,
+      })),
+      // Public events where user does not participate
+      ...publicOnlyEvents.map((e) => ({
+        id: e.id,
+        title: e.title,
+        date: e.date,
+        location: e.location,
+        tags: (e.tags ?? []).map((t) => t.name),
+        role: 'none' as const,
+        participantsCount: e.participantsCount ?? 0,
+        participants: (e.participants ?? []).map((p) => p.name),
+        isPublic: true,
+      })),
+    ];
 
     const prompt = `You are a helpful assistant for an event management app.
 Answer the user's question based ONLY on the provided events data. Be concise and friendly.
-If the question is unclear or cannot be answered from the data, respond with exactly:
+You have READ-ONLY access. You CANNOT create, modify, delete, or join events or tags.
+
+IMPORTANT RULES:
+1. If the user asks you to perform ANY data modification action (create, update, delete, join), OR if they ask about something completely unrelated to the app (like geography or politics), you MUST respond with EXACTLY this phrase:
 "Sorry, I didn't understand that. Please try rephrasing your question."
+2. If the user asks a valid question about events (e.g., filtering by date, tag, or role), but there are NO matching events in the data, DO NOT use the fallback phrase. Instead, calmly inform them that there are no events matching their request (e.g., "You have no events scheduled for next week", "There are no public tech events this weekend", etc.).
 
 Today's date: ${today}
 
-User's events:
+Events data includes:
+- User's personal events (role: "organizer" or "participant")
+- Public events available to join (role: "none")
+
+Events:
 ${JSON.stringify(snapshot, null, 2)}
 
 User question: ${question}`;
