@@ -62,7 +62,7 @@ User question: ${question}`;
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: '',
+          model: 'llama-3.3-70b-versatile',
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 500,
           temperature: 0.3,
