@@ -28,13 +28,6 @@ export class AiService {
     const userEvents = await this.eventsService.getUserEvents(userId);
     const today = new Date().toISOString();
 
-    console.log('AI ask - userId:', userId);
-    console.log('AI ask - events count:', userEvents.length);
-    console.log(
-      'AI ask - events:',
-      JSON.stringify(userEvents.map((e) => e.title)),
-    );
-
     const snapshot: EventSnapshot[] = userEvents.map((e) => ({
       id: e.id,
       title: e.title,
@@ -69,7 +62,7 @@ User question: ${question}`;
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'llama3-8b-8192',
+          model: '',
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 500,
           temperature: 0.3,
@@ -78,8 +71,6 @@ User question: ${question}`;
     );
 
     const data = (await response.json()) as GroqResponse;
-    console.log('Groq response status:', response.status);
-    console.log('Groq response data:', JSON.stringify(data));
     return (
       data.choices?.[0]?.message?.content ??
       "Sorry, I didn't understand that. Please try rephrasing your question."
