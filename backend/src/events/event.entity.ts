@@ -58,4 +58,6 @@ export class Event {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  participantsCount?: number;
 }

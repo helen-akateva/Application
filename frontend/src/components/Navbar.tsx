@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { List, Calendar, Plus, LogOut, Menu, X } from "lucide-react";
+import { List, Calendar, Plus, LogOut, Menu, X, Bot } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { logoutUser } from "../api/auth";
 
@@ -47,6 +47,12 @@ export default function Navbar() {
             <NavLink to="/my-events" className={navLinkClass}>
               <Calendar className="h-4 w-4" />
               My Events
+            </NavLink>
+          )}
+          {isAuthenticated && (
+            <NavLink to="/ai-assistant" className={navLinkClass}>
+              <Bot className="h-4 w-4" />
+              AI Assistant
             </NavLink>
           )}
 
@@ -129,6 +135,16 @@ export default function Navbar() {
               >
                 <Calendar className="h-4 w-4" />
                 My Events
+              </NavLink>
+            )}
+            {isAuthenticated && (
+              <NavLink
+                to="/ai-assistant"
+                className={mobileNavLinkClass}
+                onClick={closeMenu}
+              >
+                <Bot className="h-4 w-4" />
+                AI Assistant
               </NavLink>
             )}
 

@@ -228,11 +228,13 @@ export class EventsService {
       .where('organizer.id = :userId OR participants.id = :userId', { userId })
       .getMany();
 
-    return events.map(({ participants, ...event }) => ({
+    return events.map((event) => ({
       ...event,
       organizer: sanitizeUser(event.organizer) as User,
-      participants: participants.map((p) => sanitizeUser(p) as User),
-      participantsCount: participants.length,
-    }));
+      participants: (event.participants || []).map(
+        (p) => sanitizeUser(p) as User,
+      ),
+      participantsCount: event.participants?.length || 0,
+    })) as Event[];
   }
 }
