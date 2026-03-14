@@ -24,7 +24,7 @@ const meta: Meta<typeof Button> = {
 export default meta;
 type Story = StoryObj<typeof Button>;
 
-// ── Базові варіанти ──────────────────────────────────────────
+// ── Basic variants ──────────────────────────────────────────
 export const Primary: Story = {
   args: { variant: 'primary', children: 'Create Event' },
 };
@@ -45,7 +45,7 @@ export const Ghost: Story = {
   args: { variant: 'ghost', children: 'Clear chat' },
 };
 
-// ── Розміри ──────────────────────────────────────────────────
+// ── Sizes ──────────────────────────────────────────────────
 export const Small: Story = {
   args: { size: 'sm', children: 'Small' },
 };
@@ -58,7 +58,7 @@ export const FullWidth: Story = {
   args: { size: 'full', children: 'Submit' },
 };
 
-// ── Стани ────────────────────────────────────────────────────
+// ── States ────────────────────────────────────────────────────
 export const Loading: Story = {
   args: { isLoading: true, children: 'Saving...' },
 };
@@ -67,7 +67,7 @@ export const Disabled: Story = {
   args: { disabled: true, children: 'Not Available' },
 };
 
-// ── З іконками ───────────────────────────────────────────────
+// ── With icons ───────────────────────────────────────────────
 export const WithLeftIcon: Story = {
   args: {
     children: 'Create Event',

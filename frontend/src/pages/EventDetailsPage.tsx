@@ -36,7 +36,7 @@ export default function EventDetailsPage() {
   // Reference for native dialog
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  // 1. Load data logic
+  // Initial data loading logic
   useEffect(() => {
     const loadEvent = async () => {
       if (!id) return;
@@ -54,7 +54,7 @@ export default function EventDetailsPage() {
     loadEvent();
   }, [id]);
 
-  // 2. Manage modal with native API
+  // Manage modal open/close state using Native Dialog API
   useEffect(() => {
     const dialog = dialogRef.current;
     if (showDeleteModal) {
@@ -111,7 +111,7 @@ export default function EventDetailsPage() {
       .toUpperCase()
       .slice(0, 2);
 
-  // 3. Join/Leave logic (with errors)
+  // Business logic for joining or leaving an event
   const handleJoinLeave = async () => {
     if (!isAuthenticated) return navigate("/login");
 

@@ -80,7 +80,7 @@ export default function EventsPage() {
     }
   };
 
-  // toggle tag in filter
+  // Handles selection and deselection of tags for event filtering
   const toggleTag = (tagId: number) => {
     setSelectedTagIds((prev) =>
       prev.includes(tagId)
@@ -93,7 +93,7 @@ export default function EventsPage() {
   const filteredEvents = useMemo(() => {
     let result = events;
 
-    // text filter
+    // Filter events by search query (title, location, description)
     const query = search.toLowerCase().trim();
     if (query) {
       result = result.filter(
@@ -104,7 +104,7 @@ export default function EventsPage() {
       );
     }
 
-    // filter by tags
+    // Filter events based on selected tags
     if (selectedTagIds.length > 0) {
       result = result.filter((e) =>
         e.tags?.some((tag) => selectedTagIds.includes(tag.id)),

@@ -20,7 +20,7 @@ export default function RegisterPage() {
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
-    // Checking that passwords match — on the front end of the request
+    // Client-side password confirmation check
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       setIsLoading(false);

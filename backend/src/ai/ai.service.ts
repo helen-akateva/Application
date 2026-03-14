@@ -55,7 +55,7 @@ export class AiService {
             : ('participant' as const),
         participantsCount: e.participantsCount ?? e.participants?.length ?? 0,
         participants: (e.participants ?? []).map((p) => p.name),
-        isPublic: true,
+        isPublic: e.visibility === 'public',
       })),
       // Public events where user does not participate
       ...publicOnlyEvents.map((e) => ({

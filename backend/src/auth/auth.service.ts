@@ -20,7 +20,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    // 1. Check if user already exists
+    // Check for existing user
     const existingUser = await this.usersRepository.findOne({
       where: { email: dto.email },
     });
@@ -29,10 +29,10 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // 2. Hash the password
+    // Secure password hashing
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    // 3. Create and save new user
+    // Create user entity
     const user = this.usersRepository.create({
       email: dto.email,
       password: hashedPassword,
@@ -52,7 +52,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    // 1. Find user by email
+    // Fetch user by email
     const user = await this.usersRepository.findOne({
       where: { email: dto.email },
       select: ['id', 'email', 'password', 'name'],
@@ -62,14 +62,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // 2. Compare passwords
+    // Validate credentials
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // 3. Generate JWT token
+    // Issue authentication token
     const payload = { sub: user.id, email: user.email };
     const token = this.jwtService.sign(payload);
 

@@ -30,7 +30,7 @@ export default function AiChatWidget() {
 
   if (!isAuthenticated) return null;
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const trimmed = question.trim();
     if (!trimmed || isLoading) return;
@@ -57,7 +57,6 @@ export default function AiChatWidget() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 pointer-events-none z-[100]">
-      {/* Контейнер, що обмежує рух кнопки межами твого основного контенту (max-w-1280px) */}
       <div className="max-w-[1280px] mx-auto relative px-4 h-full pointer-events-none">
         {/* Chat window */}
         {isOpen && (
@@ -208,10 +207,10 @@ export default function AiChatWidget() {
           {isOpen ? (
             <X className="h-6 w-6 text-white" />
           ) : (
-            <Bot className="h-6 w-6 text-white" /> // Повернув робота назад
+            <Bot className="h-6 w-6 text-white" /> 
           )}
 
-          {/* Бейдж з кількістю повідомлень */}
+          {/* Badge with the number of messages */}
           {!isOpen && messages.length > 0 && (
             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white shadow-sm">
               {messages.length}

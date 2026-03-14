@@ -19,7 +19,7 @@ const meta: Meta<typeof Navbar> = {
 export default meta;
 type Story = StoryObj<typeof Navbar>;
 
-// Helper щоб встановити стан стору перед рендером
+// Helper to set the store state before rendering
 const withAuth = (Story: React.ComponentType) => {
   useAuthStore.setState({
     isAuthenticated: true,
