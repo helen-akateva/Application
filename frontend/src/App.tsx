@@ -8,7 +8,7 @@ import CreateEventPage from "./pages/CreateEventPage";
 import MyEventsPage from "./pages/MyEventsPage";
 import EditEventPage from "./pages/EditEventPage";
 import Navbar from "./components/Navbar";
-import AiAssistantPage from "./pages/AiAssistantPage";
+import AiChatWidget from "./components/AiChatWidget";
 
 // Secure route — only for logged in users
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -52,18 +52,11 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/ai-assistant"
-          element={
-            <ProtectedRoute>
-              <AiAssistantPage />
-            </ProtectedRoute>
-          }
-        />
 
         {/* Any unknown URL → to the main page */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <AiChatWidget />
     </BrowserRouter>
   );
 }
