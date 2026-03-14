@@ -39,7 +39,15 @@ export class AiService {
       (e) => !userEventIds.has(e.id),
     );
 
-    const today = new Date().toISOString();
+    const now = new Date();
+    const today = now.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
     const snapshot: EventSnapshot[] = [
       // Personal user events
@@ -47,6 +55,9 @@ export class AiService {
         id: e.id,
         title: e.title,
         date: e.date,
+        dayOfWeek: new Date(e.date).toLocaleDateString('en-US', {
+          weekday: 'long',
+        }),
         location: e.location,
         tags: (e.tags ?? []).map((t) => t.name),
         role:
@@ -62,6 +73,9 @@ export class AiService {
         id: e.id,
         title: e.title,
         date: e.date,
+        dayOfWeek: new Date(e.date).toLocaleDateString('en-US', {
+          weekday: 'long',
+        }),
         location: e.location,
         tags: (e.tags ?? []).map((t) => t.name),
         role: 'none' as const,
@@ -71,26 +85,31 @@ export class AiService {
       })),
     ];
 
-    const prompt = `You are a helpful assistant for an event management app.
-Answer the user's question based ONLY on the provided events data. Be concise and friendly.
-You have READ-ONLY access. You CANNOT create, modify, delete, or join events or tags.
+    const prompt = `You are a professional AI Assistant for an Event Management System.
+Your goal is to help users explore their events and discover new ones.
 
-IMPORTANT RULES:
-1. If the user asks you to perform ANY data modification action (create, update, delete, join), OR if they ask about something completely unrelated to the app (like geography or politics), you MUST respond with EXACTLY this phrase:
-"Sorry, I didn't understand that. Please try rephrasing your question."
-2. If the user asks a valid question about events (e.g., filtering by date, tag, or role), but there are NO matching events in the data, DO NOT use the fallback phrase. Instead, calmly inform them that there are no events matching their request.
-3. Always format dates in a human-readable format like "April 20, 2026 at 6:00 PM". NEVER use ISO format like "2026-04-20T18:00:00.000Z".
+Strict Compliance with Technical Specification:
+- READ-ONLY: You CANNOT create, edit, delete, or join/leave events/tags. 
+- SPECIFIC FALLBACKS (UX Improvement):
+  1. If the user asks to modify data (create, delete, edit, join, leave), respond: "I am a read-only assistant and cannot perform actions like creating or deleting data."
+  2. If the user asks about something completely unrelated to events or the app (e.g., general knowledge), respond: "I'm sorry, but I can only answer questions related to your events and the event management system."
+- "Your events": Events where your role is "organizer" or "participant". 
 
-Today's date: ${today}
+Interaction Rules:
+1. BE CONCISE AND FRIENDLY.
+2. If no events match a query, say: "I couldn't find any events matching your request."
+3. "Next event" means the chronologically closest event TO TODAY that you are either organizing or participating in.
+4. "This week" is strictly Monday to Sunday of the current week.
+5. "This weekend" is strictly Saturday and Sunday of the current week.
+6. Format dates as "Monday, April 20, 2026 at 6:00 PM".
 
-Events data includes:
-- User's personal events (role: "organizer" or "participant")
-- Public events available to join (role: "none")
+Today is: ${today}
 
-Events:
+Events Snapshot:
 ${JSON.stringify(snapshot, null, 2)}
 
-User question: ${question}`;
+User question: ${question}
+`;
 
     const apiKey = this.configService.get<string>('GROQ_API_KEY');
 

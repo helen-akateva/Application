@@ -127,11 +127,6 @@ Application/
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── store/
-│   │   └── types/
 │   ├── .storybook/
 │   ├── .env.example
 │   └── Dockerfile
@@ -155,9 +150,12 @@ Swagger UI is available at:
 - **Tags** — stores event tags with colors
 - **EventTags** — many-to-many join table between Events and Tags
 
-## Features (Stage 2)
+## Key Features
 
-- 🏷️ **Tags** — create and filter events by tags with colors
-- 🤖 **AI Assistant** — ask questions about your events powered by Groq
-- 📦 **Zustand** — global state management for auth, events, and AI chat
-- 📚 **Storybook** — component documentation and visual testing
+- 🔐 **Authentication** — Secure login and registration using JWT and HTTP-only cookies.
+- 📅 **Event Management** — Create, edit, and organize events with a clean, responsive UI.
+- 🏷️ **Advanced Tagging** — Categorize events with a multi-tag system and custom colors.
+- 🤖 **AI Assistant (Read-only)** — Natural language insights about your schedule powered by Groq.
+- 📦 **State Management** — Efficient global state handling with Zustand.
+- 📚 **Component Library** — Documented and visually tested components in Storybook.
+- 🐳 **Docker Support** — Seamless local development environment with Docker Compose.
