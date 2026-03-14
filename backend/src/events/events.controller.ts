@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
   Request,
+  Query,
   UsePipes,
   HttpCode,
 } from '@nestjs/common';
@@ -35,8 +36,13 @@ export class EventsController {
   @Get()
   @ApiOperation({ summary: 'Get all public events' })
   @ApiResponse({ status: 200, description: 'List of public events' })
-  async findAll() {
-    return this.eventsService.findAll();
+  async findAll(@Query('tagIds') tagIds?: string | string[]) {
+    const formattedTagIds = tagIds
+      ? Array.isArray(tagIds)
+        ? tagIds.map(Number)
+        : [Number(tagIds)]
+      : undefined;
+    return this.eventsService.findAll(formattedTagIds);
   }
 
   @Get(':id')

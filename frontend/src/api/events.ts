@@ -6,8 +6,12 @@ import type {
   UpdateEventPayload,
 } from "../types";
 
-export const fetchEvents = async () => {
-  const { data } = await api.get<EventListItem[]>("/events");
+export const fetchEvents = async (tagIds?: number[]) => {
+  const params = new URLSearchParams();
+  if (tagIds && tagIds.length > 0) {
+    tagIds.forEach((id) => params.append("tagIds", id.toString()));
+  }
+  const { data } = await api.get<EventListItem[]>("/events", { params });
   return data;
 };
 

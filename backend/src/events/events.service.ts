@@ -28,11 +28,33 @@ export class EventsService {
     private tagsService: TagsService,
   ) {}
 
-  async findAll() {
-    const events = await this.eventsRepository.find({
-      where: { visibility: EVENT_VISIBILITY.PUBLIC },
-      relations: ['organizer', 'participants', 'tags'],
-    });
+  async findAll(tagIds?: number[]) {
+    const query = this.eventsRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.organizer', 'organizer')
+      .leftJoinAndSelect('event.participants', 'participants')
+      .leftJoinAndSelect('event.tags', 'tags')
+      .where('event.visibility = :visibility', {
+        visibility: EVENT_VISIBILITY.PUBLIC,
+      });
+
+    if (tagIds && tagIds.length > 0) {
+      // Filter events that have ANY of the provided tags
+      query.andWhere(
+        (qb) =>
+          'event.id IN ' +
+          qb
+            .subQuery()
+            .select('ev.id')
+            .from('events', 'ev')
+            .innerJoin('ev.tags', 't')
+            .where('t.id IN (:...tagIds)')
+            .getQuery(),
+        { tagIds },
+      );
+    }
+
+    const events = await query.getMany();
 
     return events.map(({ participants, organizer, ...event }) => ({
       ...event,

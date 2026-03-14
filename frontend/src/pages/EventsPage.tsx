@@ -41,7 +41,10 @@ export default function EventsPage() {
       setLoading(true);
       setError(null);
       try {
-        const [data, tags] = await Promise.all([fetchEvents(), fetchTags()]);
+        const [data, tags] = await Promise.all([
+          fetchEvents(selectedTagIds),
+          fetchTags(),
+        ]);
         setEvents(data);
         setAvailableTags(tags);
 
@@ -58,7 +61,7 @@ export default function EventsPage() {
       }
     };
     loadEvents();
-  }, [isAuthenticated, setEvents, setLoading, setError]);
+  }, [isAuthenticated, selectedTagIds, setEvents, setLoading, setError]);
 
   const handleJoinLeave = async (eventId: number, currentlyJoined: boolean) => {
     if (!isAuthenticated) {
@@ -104,15 +107,8 @@ export default function EventsPage() {
       );
     }
 
-    // Filter events based on selected tags
-    if (selectedTagIds.length > 0) {
-      result = result.filter((e) =>
-        e.tags?.some((tag) => selectedTagIds.includes(tag.id)),
-      );
-    }
-
     return result;
-  }, [events, search, selectedTagIds]);
+  }, [events, search]);
 
   const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE);
   const paginatedEvents = useMemo(() => {
