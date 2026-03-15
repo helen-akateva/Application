@@ -150,7 +150,7 @@ export default function EventsPage() {
     <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-          Discover Events RESTORE TEST
+          Discover Events
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           Find and join exciting events happening around you

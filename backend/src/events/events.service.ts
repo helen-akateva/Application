@@ -203,7 +203,9 @@ export class EventsService {
     if (!event) {
       throw new NotFoundException('Event not found');
     }
-
+    if (new Date(event.date) < new Date()) {
+      throw new BadRequestException('Cannot join a past event');
+    }
     const user = await this.usersRepository.findOne({
       where: { id: userId },
     });
