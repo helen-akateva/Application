@@ -12,85 +12,112 @@ import {
 import { fetchTags } from "../api/tags";
 import EventCard from "../components/EventCard";
 import Button from "../components/Button";
-import type { Tag } from "../types";
+import type { Tag, EventListItem } from "../types";
 
 const ITEMS_PER_PAGE = 6;
 
 export default function EventsPage() {
+  const [state, setState] = useState<{
+    events: EventListItem[];
+    isLoading: boolean;
+    error: string | null;
+    joinedEventIds: Set<number>;
+    availableTags: Tag[];
+  }>({
+    events: [],
+    isLoading: true,
+    error: null,
+    joinedEventIds: new Set(),
+    availableTags: [],
+  });
+  const { events, isLoading, error, joinedEventIds, availableTags } = state;
+
+  const [params, setParams] = useState<{
+    search: string;
+    currentPage: number;
+    selectedTagIds: number[];
+    showAllTags: boolean;
+  }>({
+    search: "",
+    currentPage: 1,
+    selectedTagIds: [],
+    showAllTags: false,
+  });
+  const { search, currentPage, selectedTagIds, showAllTags } = params;
+  const MAX_VISIBLE_TAGS = 10;
+
   const {
-    events,
-    setEvents,
-    setLoading,
-    setError,
-    isLoading,
-    error,
     updateEventParticipantCount,
   } = useEventsStore();
   const { isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [joinedEventIds, setJoinedEventIds] = useState<Set<number>>(new Set());
-  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
-  const [showAllTags, setShowAllTags] = useState(false);
-  const MAX_VISIBLE_TAGS = 10;
 
   useEffect(() => {
     const loadEvents = async () => {
-      setLoading(true);
-      setError(null);
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
       try {
         const [data, tags] = await Promise.all([
           fetchEvents(selectedTagIds),
           fetchTags(),
         ]);
-        setEvents(data);
-        setAvailableTags(tags);
-
+        
+        let userEventIds = new Set<number>();
         if (isAuthenticated) {
           const userEvents = await fetchUserEvents();
-          setJoinedEventIds(new Set(userEvents.map((e) => e.id)));
-        } else {
-          setJoinedEventIds(new Set());
+          userEventIds = new Set(userEvents.map((e) => e.id));
         }
+
+        setState({
+          events: data,
+          availableTags: tags,
+          joinedEventIds: userEventIds,
+          isLoading: false,
+          error: null,
+        });
       } catch {
-        setError("Failed to load events");
-      } finally {
-        setLoading(false);
+        setState((prev) => ({ ...prev, isLoading: false, error: "Failed to load events" }));
       }
     };
     loadEvents();
-  }, [isAuthenticated, selectedTagIds, setEvents, setLoading, setError]);
+  }, [isAuthenticated, selectedTagIds]);
 
   const handleJoinLeave = async (eventId: number, currentlyJoined: boolean) => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
-    if (currentlyJoined) {
-      await leaveEvent(eventId);
-      updateEventParticipantCount(eventId, -1);
-      setJoinedEventIds((prev) => {
-        const next = new Set(prev);
-        next.delete(eventId);
-        return next;
-      });
-    } else {
-      await joinEvent(eventId);
-      updateEventParticipantCount(eventId, +1);
-      setJoinedEventIds((prev) => new Set(prev).add(eventId));
+    try {
+      if (currentlyJoined) {
+        await leaveEvent(eventId);
+        updateEventParticipantCount(eventId, -1);
+        setState((prev) => {
+          const next = new Set(prev.joinedEventIds);
+          next.delete(eventId);
+          return { ...prev, joinedEventIds: next };
+        });
+      } else {
+        await joinEvent(eventId);
+        updateEventParticipantCount(eventId, +1);
+        setState((prev) => {
+          const next = new Set(prev.joinedEventIds);
+          next.add(eventId);
+          return { ...prev, joinedEventIds: next };
+        });
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
   // Handles selection and deselection of tags for event filtering
   const toggleTag = (tagId: number) => {
-    setSelectedTagIds((prev) =>
-      prev.includes(tagId)
-        ? prev.filter((id) => id !== tagId)
-        : [...prev, tagId],
-    );
-    setCurrentPage(1);
+    setParams((prev) => ({
+      ...prev,
+      selectedTagIds: prev.selectedTagIds.includes(tagId)
+        ? prev.selectedTagIds.filter((id) => id !== tagId)
+        : [...prev.selectedTagIds, tagId],
+      currentPage: 1,
+    }));
   };
 
   const filteredEvents = useMemo(() => {
@@ -150,8 +177,11 @@ export default function EventsPage() {
           type="search"
           value={search}
           onChange={(e) => {
-            setSearch(e.target.value);
-            setCurrentPage(1);
+            setParams((prev) => ({
+              ...prev,
+              search: e.target.value,
+              currentPage: 1,
+            }));
           }}
           placeholder="Search events..."
           className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100"
@@ -190,7 +220,9 @@ export default function EventsPage() {
             {/* Show more/less */}
             {availableTags.length > MAX_VISIBLE_TAGS && (
               <button
-                onClick={() => setShowAllTags((prev) => !prev)}
+                onClick={() =>
+                  setParams((prev) => ({ ...prev, showAllTags: !prev.showAllTags }))
+                }
                 className="rounded-full px-3 py-1 text-sm text-gray-400 hover:text-gray-600 border border-dashed border-gray-300"
               >
                 {showAllTags
@@ -203,8 +235,11 @@ export default function EventsPage() {
             {selectedTagIds.length > 0 && (
               <button
                 onClick={() => {
-                  setSelectedTagIds([]);
-                  setCurrentPage(1);
+                  setParams((prev) => ({
+                    ...prev,
+                    selectedTagIds: [],
+                    currentPage: 1,
+                  }));
                 }}
                 className="rounded-full px-3 py-1 text-sm text-gray-400 hover:text-gray-600 border border-dashed border-gray-300"
               >
@@ -252,8 +287,11 @@ export default function EventsPage() {
             variant="ghost"
             size="sm"
             onClick={() => {
-              setSearch("");
-              setSelectedTagIds([]);
+              setParams((prev) => ({
+                ...prev,
+                search: "",
+                selectedTagIds: [],
+              }));
             }}
             className="mt-3 text-green-600 hover:text-green-700"
           >
@@ -282,7 +320,12 @@ export default function EventsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCurrentPage((p) => p - 1)}
+                onClick={() =>
+                  setParams((prev) => ({
+                    ...prev,
+                    currentPage: prev.currentPage - 1,
+                  }))
+                }
                 disabled={currentPage === 1}
                 className="text-gray-600 hover:text-gray-900 disabled:opacity-40"
               >
@@ -294,7 +337,12 @@ export default function EventsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCurrentPage((p) => p + 1)}
+                onClick={() =>
+                  setParams((prev) => ({
+                    ...prev,
+                    currentPage: prev.currentPage + 1,
+                  }))
+                }
                 disabled={currentPage === totalPages}
                 className="text-gray-600 hover:text-gray-900 disabled:opacity-40"
               >

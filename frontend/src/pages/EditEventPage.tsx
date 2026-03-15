@@ -13,12 +13,30 @@ export default function EditEventPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  const [event, setEvent] = useState<EventDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<string | undefined>(undefined);
-  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [state, setState] = useState<{
+    event: EventDetails | null;
+    isLoading: boolean;
+    error: string | null;
+    isSubmitting: boolean;
+    status: string | undefined;
+    availableTags: Tag[];
+  }>({
+    event: null,
+    isLoading: true,
+    error: null,
+    isSubmitting: false,
+    status: undefined,
+    availableTags: [],
+  });
+
+  const {
+    event,
+    isLoading,
+    error,
+    isSubmitting,
+    status,
+    availableTags,
+  } = state;
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -32,12 +50,18 @@ export default function EditEventPage() {
           navigate(`/events/${id}`);
           return;
         }
-        setEvent(data);
-        setAvailableTags(tags);
+        setState((prev) => ({
+          ...prev,
+          event: data,
+          availableTags: tags,
+          isLoading: false,
+        }));
       } catch {
-        setError("Event not found or server error");
-      } finally {
-        setIsLoading(false);
+        setState((prev) => ({
+          ...prev,
+          error: "Event not found or server error",
+          isLoading: false,
+        }));
       }
     };
     loadEvent();
@@ -45,8 +69,7 @@ export default function EditEventPage() {
 
   const handleSubmit = async (values: EventFormValues) => {
     if (!id) return;
-    setIsSubmitting(true);
-    setStatus(undefined);
+    setState((prev) => ({ ...prev, isSubmitting: true, status: undefined }));
     try {
       const isoDate = new Date(`${values.date}T${values.time}`).toISOString();
       const payload = {
@@ -63,13 +86,13 @@ export default function EditEventPage() {
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
       const data = axiosError.response?.data;
+      let statusMsg = data?.message || "Failed to update event";
       if (data?.errors?.length) {
-        setStatus(data.errors.join(", "));
-      } else {
-        setStatus(data?.message || "Failed to update event");
+        statusMsg = data.errors.join(", ");
       }
+      setState((prev) => ({ ...prev, status: statusMsg }));
     } finally {
-      setIsSubmitting(false);
+      setState((prev) => ({ ...prev, isSubmitting: false }));
     }
   };
 
@@ -133,7 +156,12 @@ export default function EditEventPage() {
         isSubmitting={isSubmitting}
         status={status}
         availableTags={availableTags}
-        onTagCreated={(tag) => setAvailableTags((prev) => [...prev, tag])}
+        onTagCreated={(tag) =>
+          setState((prev) => ({
+            ...prev,
+            availableTags: [...prev.availableTags, tag],
+          }))
+        }
       />
     </main>
   );

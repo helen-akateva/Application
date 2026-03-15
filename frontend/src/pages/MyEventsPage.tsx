@@ -13,38 +13,52 @@ import {
   addWeeks,
   subWeeks,
 } from "date-fns";
-import { useEventsStore } from "../store/eventsStore";
 import { useAuthStore } from "../store/authStore";
 import { fetchUserEvents } from "../api/events";
 import { Calendar, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { EventListItem } from "../types";
 
 const MyEventsPage = () => {
-  const { setError } = useEventsStore();
   const { user } = useAuthStore();
-  const [myEvents, setMyEvents] = useState<EventListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState<"month" | "week">("month");
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [state, setState] = useState<{
+    myEvents: EventListItem[];
+    isLoading: boolean;
+    loadError: string | null;
+    view: "month" | "week";
+    currentDate: Date;
+  }>({
+    myEvents: [],
+    isLoading: true,
+    loadError: null,
+    view: "month",
+    currentDate: new Date(),
+  });
+
+  const { myEvents, isLoading, loadError, view, currentDate } = state;
 
   useEffect(() => {
     const loadMyEvents = async () => {
       if (!user) return;
-      setIsLoading(true);
+      setState((prev) => ({ ...prev, isLoading: true, loadError: null }));
       try {
         const data = await fetchUserEvents();
-        setMyEvents(data);
+        setState((prev) => ({
+          ...prev,
+          myEvents: data,
+          isLoading: false,
+        }));
       } catch (err) {
         console.error(err);
-        setLoadError("Failed to load your events");
-      } finally {
-        setIsLoading(false);
+        setState((prev) => ({
+          ...prev,
+          loadError: "Failed to load your events",
+          isLoading: false,
+        }));
       }
     };
 
     loadMyEvents();
-  }, [user, setError]);
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -102,11 +116,13 @@ const MyEventsPage = () => {
         <div className="flex items-center gap-4">
           <button
             onClick={() =>
-              setCurrentDate(
-                view === "month"
-                  ? subMonths(currentDate, 1)
-                  : subWeeks(currentDate, 1),
-              )
+              setState((prev) => ({
+                ...prev,
+                currentDate:
+                  prev.view === "month"
+                    ? subMonths(prev.currentDate, 1)
+                    : subWeeks(prev.currentDate, 1),
+              }))
             }
             className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 border rounded-xl transition-all"
             aria-label="Previous"
@@ -120,11 +136,13 @@ const MyEventsPage = () => {
 
           <button
             onClick={() =>
-              setCurrentDate(
-                view === "month"
-                  ? addMonths(currentDate, 1)
-                  : addWeeks(currentDate, 1),
-              )
+              setState((prev) => ({
+                ...prev,
+                currentDate:
+                  prev.view === "month"
+                    ? addMonths(prev.currentDate, 1)
+                    : addWeeks(prev.currentDate, 1),
+              }))
             }
             className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 border rounded-xl transition-all"
             aria-label="Next"
@@ -135,13 +153,13 @@ const MyEventsPage = () => {
 
         <div className="flex bg-gray-100 p-1 rounded-xl">
           <button
-            onClick={() => setView("month")}
+            onClick={() => setState((prev) => ({ ...prev, view: "month" }))}
             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${view === "month" ? "bg-green-600 text-white shadow-md" : "text-gray-500 hover:text-gray-700"}`}
           >
             Month
           </button>
           <button
-            onClick={() => setView("week")}
+            onClick={() => setState((prev) => ({ ...prev, view: "week" }))}
             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${view === "week" ? "bg-green-600 text-white shadow-md" : "text-gray-500 hover:text-gray-700"}`}
           >
             Week
@@ -190,7 +208,7 @@ const MonthView = ({ currentDate, events }: ViewProps) => {
         ))}
       </div>
       <div className="grid grid-cols-7">
-        {days.map((day, i) => {
+        {days.map((day) => {
           const dayEvents = events
             .filter((e) => isSameDay(new Date(e.date), day))
             .sort(
@@ -198,10 +216,11 @@ const MonthView = ({ currentDate, events }: ViewProps) => {
             );
           const isToday = isSameDay(day, today);
           const isCurrentMonth = format(day, "M") === format(currentDate, "M");
+          const dayKey = day.toISOString();
 
           return (
             <div
-              key={i}
+              key={dayKey}
               className={`min-h-[80px] p-1 border-r border-b border-gray-100 last:border-r-0 transition-colors hover:bg-gray-50/50 ${!isCurrentMonth ? "bg-gray-50/10" : ""}`}
             >
               <div className="flex justify-between items-start mb-1">

@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import type { EventVisibility, Tag } from "../types";
-import { createTag } from "../api/tags";
-import { AxiosError } from "axios";
-import type { ApiError } from "../types";
+import TagSelector from "./TagSelector";
+import Button from "./Button";
 
 const validationSchema = yup.object({
   title: yup
@@ -34,7 +33,7 @@ export interface EventFormValues {
   tagIds: number[];
 }
 
-import Button from "./Button";
+
 
 interface EventFormProps {
   initialValues?: Partial<EventFormValues>;
@@ -57,14 +56,9 @@ export default function EventForm({
   availableTags,
   onTagCreated,
 }: EventFormProps) {
-  const [localTags, setLocalTags] = useState<Tag[]>([]);
-  const [newTagName, setNewTagName] = useState("");
-  const [isCreatingTag, setIsCreatingTag] = useState(false);
-  const [tagError, setTagError] = useState("");
+  const [extraTags, setExtraTags] = useState<Tag[]>([]);
 
-  useEffect(() => {
-    setLocalTags(availableTags);
-  }, [availableTags]);
+  const localTags = [...availableTags, ...extraTags];
 
   const formik = useFormik<EventFormValues>({
     initialValues: {
@@ -94,43 +88,7 @@ export default function EventForm({
     },
   });
 
-  const handleCreateTag = async () => {
-    const trimmed = newTagName.trim();
-    if (!trimmed) return;
 
-    const current = formik.values.tagIds ?? [];
-    if (current.length >= 5) {
-      setTagError("Maximum 5 tags allowed");
-      return;
-    }
-
-    const existing = localTags.find(
-      (t) => t.name.toLowerCase() === trimmed.toLowerCase(),
-    );
-    if (existing) {
-      if (!current.includes(existing.id)) {
-        formik.setFieldValue("tagIds", [...current, existing.id]);
-      }
-      setNewTagName("");
-      setTagError("");
-      return;
-    }
-
-    setIsCreatingTag(true);
-    setTagError("");
-    try {
-      const newTag = await createTag(trimmed);
-      setLocalTags((prev) => [...prev, newTag]);
-      formik.setFieldValue("tagIds", [...current, newTag.id]);
-      setNewTagName("");
-      onTagCreated?.(newTag);
-    } catch (err) {
-      const axiosError = err as AxiosError<ApiError>;
-      setTagError(axiosError.response?.data?.message || "Failed to create tag");
-    } finally {
-      setIsCreatingTag(false);
-    }
-  };
 
   const today = new Date().toISOString().split("T")[0];
   const minTime =
@@ -139,7 +97,8 @@ export default function EventForm({
       : undefined;
 
   const getInputClass = (field: keyof EventFormValues) => {
-    const isError = formik.touched[field] && formik.errors[field];
+  const isError = formik.touched[field] && formik.errors[field];
+    
     return `w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all focus:ring-2 ${
       isError
         ? "border-red-300 focus:border-red-500 focus:ring-red-100"
@@ -199,11 +158,11 @@ export default function EventForm({
         {/* Date & Time Grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="date" className="text-sm font-medium text-gray-700">
+            <label htmlFor="event-date" className="text-sm font-medium text-gray-700">
               Date *
             </label>
             <input
-              id="date"
+              id="event-date"
               type="date"
               min={!initialValues?.title ? today : undefined}
               {...formik.getFieldProps("date")}
@@ -214,11 +173,11 @@ export default function EventForm({
             )}
           </div>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="time" className="text-sm font-medium text-gray-700">
+            <label htmlFor="event-time" className="text-sm font-medium text-gray-700">
               Time *
             </label>
             <input
-              id="time"
+              id="event-time"
               type="time"
               min={minTime}
               {...formik.getFieldProps("time")}
@@ -271,123 +230,54 @@ export default function EventForm({
         </div>
 
         {/* Visibility */}
-        <fieldset className="space-y-3 pt-2">
-          <legend className="mb-2 text-sm font-bold text-gray-900">
-            Visibility
-          </legend>
-          <div className="space-y-3">
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="radio"
-                name="visibility"
-                value="public"
-                checked={formik.values.visibility === "public"}
-                onChange={formik.handleChange}
-                className="mt-1 h-4 w-4 accent-green-600"
-              />
-              <div className="flex flex-col">
-                <span className="text-sm text-gray-700 font-medium">
-                  Public - Anyone can see and join this event
-                </span>
-              </div>
-            </label>
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="radio"
-                name="visibility"
-                value="private"
-                checked={formik.values.visibility === "private"}
-                onChange={formik.handleChange}
-                className="mt-1 h-4 w-4 accent-green-600"
-              />
-              <div className="flex flex-col">
-                <span className="text-sm text-gray-700 font-medium">
-                  Private - Only invited people can see this event
-                </span>
-              </div>
-            </label>
-          </div>
-        </fieldset>
-        {/* Tags */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700">
-            Tags{" "}
-            <span className="text-gray-400 font-normal">(optional, max 5)</span>
-          </label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {localTags.map((tag) => {
-              const isSelected = formik.values.tagIds?.includes(tag.id);
-              return (
-                <button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => {
-                    const current = formik.values.tagIds ?? [];
-                    if (isSelected) {
-                      formik.setFieldValue(
-                        "tagIds",
-                        current.filter((id) => id !== tag.id),
-                      );
-                    } else if (current.length < 5) {
-                      formik.setFieldValue("tagIds", [...current, tag.id]);
-                    }
-                  }}
-                  className={`rounded-full px-3 py-1 text-sm font-medium border transition-all ${
-                    isSelected
-                      ? "text-white border-transparent"
-                      : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
-                  }`}
-                  style={
-                    isSelected
-                      ? {
-                          backgroundColor: tag.color ?? "#6b7280",
-                          borderColor: tag.color ?? "#6b7280",
-                        }
-                      : {}
-                  }
-                >
-                  {tag.name}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex gap-2 items-center">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="relative">
             <input
-              type="text"
-              placeholder="Add new tag"
-              value={newTagName}
-              onChange={(e) => setNewTagName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleCreateTag();
-                }
-              }}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-100"
-              disabled={
-                isCreatingTag || (formik.values.tagIds?.length ?? 0) >= 5
-              }
+              type="radio"
+              id="visibility-public"
+              name="visibility"
+              value="public"
+              checked={formik.values.visibility === "public"}
+              onChange={() => formik.setFieldValue("visibility", "public")}
+              className="peer sr-only"
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCreateTag}
-              isLoading={isCreatingTag}
-              disabled={
-                (formik.values.tagIds?.length ?? 0) >= 5 || !newTagName.trim()
-              }
+            <label
+              htmlFor="visibility-public"
+              className="flex cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white p-4 font-semibold text-gray-500 transition-all hover:bg-gray-50 peer-checked:border-green-600 peer-checked:bg-green-50 peer-checked:text-green-700"
             >
-              Add
-            </Button>
+              Public
+            </label>
           </div>
 
-          {(formik.values.tagIds?.length ?? 0) >= 5 && (
-            <p className="text-xs text-amber-500">Maximum 5 tags selected</p>
-          )}
-          {tagError && <p className="text-xs text-red-500">{tagError}</p>}
+          <div className="relative">
+            <input
+              type="radio"
+              id="visibility-private"
+              name="visibility"
+              value="private"
+              checked={formik.values.visibility === "private"}
+              onChange={() => formik.setFieldValue("visibility", "private")}
+              className="peer sr-only"
+            />
+            <label
+              htmlFor="visibility-private"
+              className="flex cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white p-4 font-semibold text-gray-500 transition-all hover:bg-gray-50 peer-checked:border-green-600 peer-checked:bg-green-50 peer-checked:text-green-700"
+            >
+              Private
+            </label>
+          </div>
         </div>
+        {/* Tags */}
+        <TagSelector
+          availableTags={localTags}
+          selectedTagIds={formik.values.tagIds ?? []}
+          onChange={(tagIds: number[]) => formik.setFieldValue("tagIds", tagIds)}
+          onTagCreated={(tag: Tag) => {
+            setExtraTags((prev) => [...prev, tag]);
+            onTagCreated?.(tag);
+          }}
+        />
+
 
         {/* Form Actions */}
         <footer className="flex gap-4 pt-6">

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAiStore } from "../store/aiStore";
 import { useAuthStore } from "../store/authStore";
 import { askAI } from "../api/ai";
-import { Send, Bot, X, Trash2,} from "lucide-react";
+import { Send, Bot, X, Trash2 } from "lucide-react";
 import { AxiosError } from "axios";
 import type { ApiError } from "../types";
 import Button from "./Button";
@@ -124,9 +124,9 @@ export default function AiChatWidget() {
                 </li>
               )}
 
-              {messages.map((msg, i) => (
+              {messages.map((msg) => (
                 <li
-                  key={i}
+                  key={msg.id}
                   className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.role === "assistant" && (
@@ -207,7 +207,7 @@ export default function AiChatWidget() {
           {isOpen ? (
             <X className="h-6 w-6 text-white" />
           ) : (
-            <Bot className="h-6 w-6 text-white" /> 
+            <Bot className="h-6 w-6 text-white" />
           )}
 
           {/* Badge with the number of messages */}

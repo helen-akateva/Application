@@ -1,15 +1,16 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 interface Message {
-  role: 'user' | 'assistant';
+  id: string;
+  role: "user" | "assistant";
   text: string;
 }
 
 interface AiStore {
   messages: Message[];
   isLoading: boolean;
-  addMessage: (msg: Message) => void;
+  addMessage: (msg: Omit<Message, 'id'>) => void;
   setLoading: (isLoading: boolean) => void;
   clearMessages: () => void;
 }
@@ -22,13 +23,16 @@ export const useAiStore = create<AiStore>()(
 
       addMessage: (msg) =>
         set((state) => ({
-          messages: [...state.messages, msg].slice(-50), 
+          messages: [
+            ...state.messages,
+            { ...msg, id: crypto.randomUUID() },
+          ].slice(-50),
         })),
       setLoading: (isLoading) => set({ isLoading }),
       clearMessages: () => set({ messages: [] }),
     }),
     {
-      name: 'ai-chat-history',
+      name: "ai-chat-history",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ messages: state.messages }),
     },
