@@ -10,6 +10,7 @@ import { Event, EVENT_VISIBILITY } from './event.entity';
 import { User } from '../users/user.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { TagsService } from '../tags/tags.service';
 
 function sanitizeUser(user: User): Omit<User, 'password'> {
   const { password, ...safe } = user as User & { password?: string };
@@ -24,25 +25,49 @@ export class EventsService {
     private eventsRepository: Repository<Event>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-  ) { }
+    private tagsService: TagsService,
+  ) {}
 
-  async findAll() {
-    const events = await this.eventsRepository.find({
-      where: { visibility: EVENT_VISIBILITY.PUBLIC },
-      relations: ['organizer', 'participants'],
-    });
+  async findAll(tagIds?: number[]) {
+    const query = this.eventsRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.organizer', 'organizer')
+      .leftJoinAndSelect('event.participants', 'participants')
+      .leftJoinAndSelect('event.tags', 'tags')
+      .where('event.visibility = :visibility', {
+        visibility: EVENT_VISIBILITY.PUBLIC,
+      });
+
+    if (tagIds && tagIds.length > 0) {
+      // Filter events that have ANY of the provided tags
+      query.andWhere(
+        (qb) =>
+          'event.id IN ' +
+          qb
+            .subQuery()
+            .select('ev.id')
+            .from('events', 'ev')
+            .innerJoin('ev.tags', 't')
+            .where('t.id IN (:...tagIds)')
+            .getQuery(),
+        { tagIds },
+      );
+    }
+
+    const events = await query.getMany();
 
     return events.map(({ participants, organizer, ...event }) => ({
       ...event,
-      organizer: sanitizeUser(organizer),
-      participantsCount: participants.length,
+      organizer: sanitizeUser(organizer) as User,
+      participants: (participants || []).map((p) => sanitizeUser(p) as User),
+      participantsCount: participants?.length || 0,
     }));
   }
 
   async findOne(id: number, userId?: number): Promise<Event> {
     const event = await this.eventsRepository.findOne({
       where: { id },
-      relations: ['organizer', 'participants'],
+      relations: ['organizer', 'participants', 'tags'],
     });
 
     if (!event) {
@@ -78,15 +103,24 @@ export class EventsService {
       throw new NotFoundException('User not found');
     }
 
+    if (dto.tagIds && dto.tagIds.length > 5) {
+      throw new BadRequestException('Maximum 5 tags allowed');
+    }
+
     const eventDate = new Date(dto.date);
     if (eventDate < new Date()) {
       throw new BadRequestException('Cannot create events in the past');
     }
 
+    const tags = dto.tagIds?.length
+      ? await this.tagsService.findByIds(dto.tagIds)
+      : [];
+
     const event = this.eventsRepository.create({
       ...dto,
       date: eventDate,
       organizer: user,
+      tags,
     });
 
     const saved = await this.eventsRepository.save(event);
@@ -101,7 +135,7 @@ export class EventsService {
   ): Promise<Event> {
     const event = await this.eventsRepository.findOne({
       where: { id },
-      relations: ['organizer', 'participants'],
+      relations: ['organizer', 'participants', 'tags'],
     });
 
     if (!event) {
@@ -112,6 +146,10 @@ export class EventsService {
       throw new ForbiddenException('You are not the organizer of this event');
     }
 
+    if (dto.tagIds && dto.tagIds.length > 5) {
+      throw new BadRequestException('Maximum 5 tags allowed');
+    }
+
     if (dto.capacity !== undefined) {
       const participantsCount = event.participants.length;
       if (dto.capacity < participantsCount) {
@@ -119,6 +157,12 @@ export class EventsService {
           `Capacity cannot be less than current participants count (${participantsCount})`,
         );
       }
+    }
+
+    if (dto.tagIds !== undefined) {
+      event.tags = dto.tagIds.length
+        ? await this.tagsService.findByIds(dto.tagIds)
+        : [];
     }
 
     Object.assign(event, {
@@ -211,14 +255,17 @@ export class EventsService {
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.organizer', 'organizer')
       .leftJoinAndSelect('event.participants', 'participants')
+      .leftJoinAndSelect('event.tags', 'tags')
       .where('organizer.id = :userId OR participants.id = :userId', { userId })
       .getMany();
 
-    return events.map(({ participants, ...event }) => ({
+    return events.map((event) => ({
       ...event,
       organizer: sanitizeUser(event.organizer) as User,
-      participants: participants.map((p) => sanitizeUser(p) as User),
-      participantsCount: participants.length,
-    }));
+      participants: (event.participants || []).map(
+        (p) => sanitizeUser(p) as User,
+      ),
+      participantsCount: event.participants?.length || 0,
+    })) as Event[];
   }
 }

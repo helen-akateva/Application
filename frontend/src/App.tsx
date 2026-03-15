@@ -1,13 +1,14 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './store/authStore';
-import EventsPage from './pages/EventsPage';
-import EventDetailsPage from './pages/EventDetailsPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import CreateEventPage from './pages/CreateEventPage';
-import MyEventsPage from './pages/MyEventsPage';
-import EditEventPage from './pages/EditEventPage';
-import Navbar from './components/Navbar';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuthStore } from "./store/authStore";
+import EventsPage from "./pages/EventsPage";
+import EventDetailsPage from "./pages/EventDetailsPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import CreateEventPage from "./pages/CreateEventPage";
+import MyEventsPage from "./pages/MyEventsPage";
+import EditEventPage from "./pages/EditEventPage";
+import Navbar from "./components/Navbar";
+import AiChatWidget from "./components/AiChatWidget";
 
 // Secure route — only for logged in users
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,7 @@ function App() {
         {/* Any unknown URL → to the main page */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <AiChatWidget />
     </BrowserRouter>
   );
 }

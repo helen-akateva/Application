@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { List, Calendar, Plus, LogOut, Menu, X } from "lucide-react";
+import { List, Calendar, Plus, LogOut, Menu, X} from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { logoutUser } from "../api/auth";
 
@@ -22,13 +22,15 @@ export default function Navbar() {
   const closeMenu = () => setIsMenuOpen(false);
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-1.5 text-sm font-medium transition-colors ${isActive ? "text-gray-900" : "text-gray-500 hover:text-gray-900"
+    `flex items-center gap-1.5 text-sm font-medium transition-colors ${
+      isActive ? "text-gray-900" : "text-gray-500 hover:text-gray-900"
     }`;
 
   const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive
-      ? "bg-gray-100 text-gray-900"
-      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+    `flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+      isActive
+        ? "bg-gray-100 text-gray-900"
+        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
     }`;
 
   return (
@@ -129,7 +131,6 @@ export default function Navbar() {
                 My Events
               </NavLink>
             )}
-
             {isAuthenticated && (
               <NavLink
                 to="/create-event"

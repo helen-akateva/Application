@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { fetchEventById, updateEvent } from "../api/events";
+import { fetchTags } from "../api/tags";
 import { AxiosError } from "axios";
-import type { ApiError, EventDetails } from "../types";
+import type { ApiError, EventDetails, Tag } from "../types";
 import EventForm, { type EventFormValues } from "../components/EventForm";
 import { useAuthStore } from "../store/authStore";
 
@@ -12,26 +13,55 @@ export default function EditEventPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  const [event, setEvent] = useState<EventDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<string | undefined>(undefined);
+  const [state, setState] = useState<{
+    event: EventDetails | null;
+    isLoading: boolean;
+    error: string | null;
+    isSubmitting: boolean;
+    status: string | undefined;
+    availableTags: Tag[];
+  }>({
+    event: null,
+    isLoading: true,
+    error: null,
+    isSubmitting: false,
+    status: undefined,
+    availableTags: [],
+  });
+
+  const {
+    event,
+    isLoading,
+    error,
+    isSubmitting,
+    status,
+    availableTags,
+  } = state;
 
   useEffect(() => {
     const loadEvent = async () => {
       if (!id) return;
       try {
-        const data = await fetchEventById(Number(id));
+        const [data, tags] = await Promise.all([
+          fetchEventById(Number(id)),
+          fetchTags(),
+        ]);
         if (data.organizer.id !== user?.id) {
           navigate(`/events/${id}`);
           return;
         }
-        setEvent(data);
+        setState((prev) => ({
+          ...prev,
+          event: data,
+          availableTags: tags,
+          isLoading: false,
+        }));
       } catch {
-        setError("Event not found or server error");
-      } finally {
-        setIsLoading(false);
+        setState((prev) => ({
+          ...prev,
+          error: "Event not found or server error",
+          isLoading: false,
+        }));
       }
     };
     loadEvent();
@@ -39,11 +69,9 @@ export default function EditEventPage() {
 
   const handleSubmit = async (values: EventFormValues) => {
     if (!id) return;
-    setIsSubmitting(true);
-    setStatus(undefined);
+    setState((prev) => ({ ...prev, isSubmitting: true, status: undefined }));
     try {
       const isoDate = new Date(`${values.date}T${values.time}`).toISOString();
-
       const payload = {
         title: values.title,
         description: values.description,
@@ -51,18 +79,20 @@ export default function EditEventPage() {
         location: values.location,
         capacity: values.capacity ? Number(values.capacity) : undefined,
         visibility: values.visibility,
+        tagIds: values.tagIds,
       };
-
       await updateEvent(Number(id), payload);
       navigate(`/events/${id}`);
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
       const data = axiosError.response?.data;
+      let statusMsg = data?.message || "Failed to update event";
       if (data?.errors?.length) {
-        setStatus(data.errors.join(", "));
-      } else {
-        setStatus(data?.message || "Failed to update event");
+        statusMsg = data.errors.join(", ");
       }
+      setState((prev) => ({ ...prev, status: statusMsg }));
+    } finally {
+      setState((prev) => ({ ...prev, isSubmitting: false }));
     }
   };
 
@@ -96,6 +126,7 @@ export default function EditEventPage() {
     location: event.location,
     capacity: event.capacity?.toString() || "",
     visibility: event.visibility,
+    tagIds: event.tags?.map((t) => t.id) ?? [],
   };
 
   return (
@@ -109,7 +140,6 @@ export default function EditEventPage() {
           Back to event details
         </Link>
       </nav>
-
       <section className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
           Edit Event
@@ -118,7 +148,6 @@ export default function EditEventPage() {
           Update the details of your event
         </p>
       </section>
-
       <EventForm
         initialValues={initialValues}
         onSubmit={handleSubmit}
@@ -126,6 +155,13 @@ export default function EditEventPage() {
         submitLabel="Save Changes"
         isSubmitting={isSubmitting}
         status={status}
+        availableTags={availableTags}
+        onTagCreated={(tag) =>
+          setState((prev) => ({
+            ...prev,
+            availableTags: [...prev.availableTags, tag],
+          }))
+        }
       />
     </main>
   );

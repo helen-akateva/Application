@@ -9,6 +9,7 @@ import {
   JoinTable,
 } from 'typeorm';
 import { User } from '../users/user.entity';
+import { Tag } from '../tags/tag.entity';
 
 export const EVENT_VISIBILITY = {
   PUBLIC: 'public',
@@ -48,9 +49,15 @@ export class Event {
   @JoinTable({ name: 'participants' })
   participants: User[];
 
+  @ManyToMany(() => Tag, (tag) => tag.events, { eager: true })
+  @JoinTable({ name: 'event_tags' })
+  tags: Tag[];
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  participantsCount?: number;
 }

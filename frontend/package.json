@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "vite preview --host 0.0.0.0 --port $PORT"
+    "start": "vite preview --host 0.0.0.0 --port $PORT",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
@@ -38,6 +40,18 @@
     "tailwindcss": "^4.2.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "storybook": "^10.2.18",
+    "@storybook/react-vite": "^10.2.18",
+    "@chromatic-com/storybook": "^5.0.1",
+    "@storybook/addon-vitest": "^10.2.18",
+    "@storybook/addon-a11y": "^10.2.18",
+    "@storybook/addon-docs": "^10.2.18",
+    "@storybook/addon-onboarding": "^10.2.18",
+    "eslint-plugin-storybook": "^10.2.18",
+    "vitest": "^4.1.0",
+    "playwright": "^1.58.2",
+    "@vitest/browser-playwright": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.0"
   }
 }

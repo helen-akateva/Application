@@ -26,10 +26,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let errors: string[] | null = null;
 
     if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-      if ('message' in exceptionResponse && typeof exceptionResponse.message === 'string') {
+      if (
+        'message' in exceptionResponse &&
+        typeof exceptionResponse.message === 'string'
+      ) {
         message = exceptionResponse.message;
       }
-      if ('errors' in exceptionResponse && Array.isArray(exceptionResponse.errors)) {
+      if (
+        'errors' in exceptionResponse &&
+        Array.isArray(exceptionResponse.errors)
+      ) {
         errors = exceptionResponse.errors as string[];
       }
     } else if (exception instanceof Error) {

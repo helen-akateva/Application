@@ -1,6 +1,7 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import type { User } from '../types';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { User } from "../types";
+import { useAiStore } from "./aiStore";
 
 interface AuthStore {
   isAuthenticated: boolean;
@@ -23,10 +24,12 @@ export const useAuthStore = create<AuthStore>()(
       // Full cleanup on logout
       logout: () => {
         set({ user: null, isAuthenticated: false });
+        // Clear AI chat history on logout to prevent leakage between users
+        useAiStore.getState().clearMessages();
       },
     }),
     {
-      name: 'auth-storage',
+      name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,

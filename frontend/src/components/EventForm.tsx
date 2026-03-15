@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
-import type { EventVisibility } from "../types";
+import type { EventVisibility, Tag } from "../types";
+import TagSelector from "./TagSelector";
+import Button from "./Button";
 
 const validationSchema = yup.object({
   title: yup
@@ -27,9 +30,10 @@ export interface EventFormValues {
   location: string;
   capacity: string;
   visibility: EventVisibility;
+  tagIds: number[];
 }
 
-import Button from "./Button";
+
 
 interface EventFormProps {
   initialValues?: Partial<EventFormValues>;
@@ -38,6 +42,8 @@ interface EventFormProps {
   isSubmitting: boolean;
   status?: string;
   onCancel: () => void;
+  availableTags: Tag[];
+  onTagCreated?: (tag: Tag) => void;
 }
 
 export default function EventForm({
@@ -47,7 +53,13 @@ export default function EventForm({
   isSubmitting,
   status,
   onCancel,
+  availableTags,
+  onTagCreated,
 }: EventFormProps) {
+  const [extraTags, setExtraTags] = useState<Tag[]>([]);
+
+  const localTags = [...availableTags, ...extraTags];
+
   const formik = useFormik<EventFormValues>({
     initialValues: {
       title: initialValues?.title || "",
@@ -57,6 +69,7 @@ export default function EventForm({
       location: initialValues?.location || "",
       capacity: initialValues?.capacity || "",
       visibility: initialValues?.visibility || "public",
+      tagIds: initialValues?.tagIds ?? [],
     },
     validationSchema,
     enableReinitialize: true,
@@ -75,6 +88,8 @@ export default function EventForm({
     },
   });
 
+
+
   const today = new Date().toISOString().split("T")[0];
   const minTime =
     formik.values.date === today && !initialValues?.title
@@ -82,7 +97,8 @@ export default function EventForm({
       : undefined;
 
   const getInputClass = (field: keyof EventFormValues) => {
-    const isError = formik.touched[field] && formik.errors[field];
+  const isError = formik.touched[field] && formik.errors[field];
+    
     return `w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all focus:ring-2 ${
       isError
         ? "border-red-300 focus:border-red-500 focus:ring-red-100"
@@ -142,11 +158,11 @@ export default function EventForm({
         {/* Date & Time Grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="date" className="text-sm font-medium text-gray-700">
+            <label htmlFor="event-date" className="text-sm font-medium text-gray-700">
               Date *
             </label>
             <input
-              id="date"
+              id="event-date"
               type="date"
               min={!initialValues?.title ? today : undefined}
               {...formik.getFieldProps("date")}
@@ -157,11 +173,11 @@ export default function EventForm({
             )}
           </div>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="time" className="text-sm font-medium text-gray-700">
+            <label htmlFor="event-time" className="text-sm font-medium text-gray-700">
               Time *
             </label>
             <input
-              id="time"
+              id="event-time"
               type="time"
               min={minTime}
               {...formik.getFieldProps("time")}
@@ -214,43 +230,48 @@ export default function EventForm({
         </div>
 
         {/* Visibility */}
-        <fieldset className="space-y-3 pt-2">
-          <legend className="mb-2 text-sm font-bold text-gray-900">
-            Visibility
-          </legend>
-          <div className="space-y-3">
-            <label className="flex cursor-pointer items-start gap-3">
+        <div className="flex flex-col gap-3">
+          <label className="text-sm font-bold text-gray-900">Visibility</label>
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="radio"
                 name="visibility"
                 value="public"
                 checked={formik.values.visibility === "public"}
-                onChange={formik.handleChange}
-                className="mt-1 h-4 w-4 accent-green-600"
+                onChange={() => formik.setFieldValue("visibility", "public")}
+                className="h-4 w-4 border-gray-300 accent-green-600 focus:ring-green-500"
               />
-              <div className="flex flex-col">
-                <span className="text-sm text-gray-700 font-medium">
-                  Public - Anyone can see and join this event
-                </span>
-              </div>
+              <span className="text-sm text-gray-700 hover:text-gray-900 transition-colors">
+                Public - Anyone can see and join this event
+              </span>
             </label>
-            <label className="flex cursor-pointer items-start gap-3">
+            <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="radio"
                 name="visibility"
                 value="private"
                 checked={formik.values.visibility === "private"}
-                onChange={formik.handleChange}
-                className="mt-1 h-4 w-4 accent-green-600"
+                onChange={() => formik.setFieldValue("visibility", "private")}
+                className="h-4 w-4 border-gray-300 accent-green-600 focus:ring-green-500"
               />
-              <div className="flex flex-col">
-                <span className="text-sm text-gray-700 font-medium">
-                  Private - Only invited people can see this event
-                </span>
-              </div>
+              <span className="text-sm text-gray-700 hover:text-gray-900 transition-colors">
+                Private - Only invited people can see this event
+              </span>
             </label>
           </div>
-        </fieldset>
+        </div>
+        {/* Tags */}
+        <TagSelector
+          availableTags={localTags}
+          selectedTagIds={formik.values.tagIds ?? []}
+          onChange={(tagIds: number[]) => formik.setFieldValue("tagIds", tagIds)}
+          onTagCreated={(tag: Tag) => {
+            setExtraTags((prev) => [...prev, tag]);
+            onTagCreated?.(tag);
+          }}
+        />
+
 
         {/* Form Actions */}
         <footer className="flex gap-4 pt-6">

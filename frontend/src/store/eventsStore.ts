@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import type { EventListItem, EventDetails } from '../types';
+import { create } from "zustand";
+import type { EventListItem, EventDetails } from "../types";
 
 interface EventsStore {
   events: EventListItem[];

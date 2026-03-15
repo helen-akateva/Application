@@ -4,9 +4,9 @@ import type { Event } from '../events/event.entity';
 
 @Injectable()
 export class UsersService {
-    constructor(private readonly eventsService: EventsService) { }
+  constructor(private readonly eventsService: EventsService) {}
 
-    async getUserEvents(userId: number): Promise<Event[]> {
-        return this.eventsService.getUserEvents(userId);
-    }
+  async getUserEvents(userId: number): Promise<Event[]> {
+    return this.eventsService.getUserEvents(userId);
+  }
 }

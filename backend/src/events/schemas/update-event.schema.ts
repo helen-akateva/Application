@@ -20,4 +20,9 @@ export const updateEventSchema = yup.object({
     .string()
     .oneOf(['public', 'private'], 'Visibility must be public or private')
     .optional(),
+  tagIds: yup
+    .array()
+    .of(yup.number().required())
+    .max(5, 'Maximum 5 tags allowed')
+    .optional(),
 });

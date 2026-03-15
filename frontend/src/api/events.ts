@@ -1,8 +1,17 @@
-import api from './axios';
-import type { EventListItem, EventDetails, CreateEventPayload, UpdateEventPayload } from '../types';
+import api from "./axios";
+import type {
+  EventListItem,
+  EventDetails,
+  CreateEventPayload,
+  UpdateEventPayload,
+} from "../types";
 
-export const fetchEvents = async () => {
-  const { data } = await api.get<EventListItem[]>('/events');
+export const fetchEvents = async (tagIds?: number[]) => {
+  const params = new URLSearchParams();
+  if (tagIds && tagIds.length > 0) {
+    tagIds.forEach((id) => params.append("tagIds", id.toString()));
+  }
+  const { data } = await api.get<EventListItem[]>("/events", { params });
   return data;
 };
 
@@ -12,7 +21,7 @@ export const fetchEventById = async (id: number) => {
 };
 
 export const createEvent = async (payload: CreateEventPayload) => {
-  const { data } = await api.post<EventDetails>('/events', payload);
+  const { data } = await api.post<EventDetails>("/events", payload);
   return data;
 };
 
@@ -28,6 +37,6 @@ export const joinEvent = (id: number) => api.post(`/events/${id}/join`);
 export const leaveEvent = (id: number) => api.post(`/events/${id}/leave`);
 
 export const fetchUserEvents = async () => {
-  const { data } = await api.get<EventListItem[]>('/users/me/events');
+  const { data } = await api.get<EventListItem[]>("/users/me/events");
   return data;
 };
