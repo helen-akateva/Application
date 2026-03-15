@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import type { EventVisibility, Tag } from "../types";
@@ -33,8 +32,6 @@ export interface EventFormValues {
   tagIds: number[];
 }
 
-
-
 interface EventFormProps {
   initialValues?: Partial<EventFormValues>;
   onSubmit: (values: EventFormValues) => void;
@@ -56,10 +53,6 @@ export default function EventForm({
   availableTags,
   onTagCreated,
 }: EventFormProps) {
-  const [extraTags, setExtraTags] = useState<Tag[]>([]);
-
-  const localTags = [...availableTags, ...extraTags];
-
   const formik = useFormik<EventFormValues>({
     initialValues: {
       title: initialValues?.title || "",
@@ -88,8 +81,6 @@ export default function EventForm({
     },
   });
 
-
-
   const today = new Date().toISOString().split("T")[0];
   const minTime =
     formik.values.date === today && !initialValues?.title
@@ -97,8 +88,7 @@ export default function EventForm({
       : undefined;
 
   const getInputClass = (field: keyof EventFormValues) => {
-  const isError = formik.touched[field] && formik.errors[field];
-    
+    const isError = formik.touched[field] && formik.errors[field];
     return `w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all focus:ring-2 ${
       isError
         ? "border-red-300 focus:border-red-500 focus:ring-red-100"
@@ -155,10 +145,13 @@ export default function EventForm({
           )}
         </div>
 
-        {/* Date & Time Grid */}
+        {/* Date & Time */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="event-date" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="event-date"
+              className="text-sm font-medium text-gray-700"
+            >
               Date *
             </label>
             <input
@@ -173,7 +166,10 @@ export default function EventForm({
             )}
           </div>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="event-time" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="event-time"
+              className="text-sm font-medium text-gray-700"
+            >
               Time *
             </label>
             <input
@@ -261,17 +257,16 @@ export default function EventForm({
             </label>
           </div>
         </div>
+
         {/* Tags */}
         <TagSelector
-          availableTags={localTags}
+          availableTags={availableTags}
           selectedTagIds={formik.values.tagIds ?? []}
-          onChange={(tagIds: number[]) => formik.setFieldValue("tagIds", tagIds)}
-          onTagCreated={(tag: Tag) => {
-            setExtraTags((prev) => [...prev, tag]);
-            onTagCreated?.(tag);
-          }}
+          onChange={(tagIds: number[]) =>
+            formik.setFieldValue("tagIds", tagIds)
+          }
+          onTagCreated={onTagCreated}
         />
-
 
         {/* Form Actions */}
         <footer className="flex gap-4 pt-6">

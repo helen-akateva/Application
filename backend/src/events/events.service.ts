@@ -189,7 +189,9 @@ export class EventsService {
     if (event.organizer.id !== userId) {
       throw new ForbiddenException('You are not the organizer of this event');
     }
-
+    if (new Date(event.date) < new Date()) {
+      throw new BadRequestException('Cannot edit a past event');
+    }
     await this.eventsRepository.remove(event);
     return { message: 'Event deleted successfully' };
   }
