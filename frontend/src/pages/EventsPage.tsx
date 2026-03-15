@@ -12,25 +12,31 @@ import {
 import { fetchTags } from "../api/tags";
 import EventCard from "../components/EventCard";
 import Button from "../components/Button";
-import type { Tag, EventListItem } from "../types";
+import type { Tag} from "../types";
 
 const ITEMS_PER_PAGE = 6;
 
 export default function EventsPage() {
+  const {
+    events,
+    setEvents,
+    updateEventParticipantCount,
+  } = useEventsStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const navigate = useNavigate();
+
   const [state, setState] = useState<{
-    events: EventListItem[];
     isLoading: boolean;
     error: string | null;
     joinedEventIds: Set<number>;
     availableTags: Tag[];
   }>({
-    events: [],
     isLoading: true,
     error: null,
     joinedEventIds: new Set(),
     availableTags: [],
   });
-  const { events, isLoading, error, joinedEventIds, availableTags } = state;
+  const { isLoading, error, joinedEventIds, availableTags } = state;
 
   const [params, setParams] = useState<{
     search: string;
@@ -45,12 +51,6 @@ export default function EventsPage() {
   });
   const { search, currentPage, selectedTagIds, showAllTags } = params;
   const MAX_VISIBLE_TAGS = 10;
-
-  const {
-    updateEventParticipantCount,
-  } = useEventsStore();
-  const { isAuthenticated, user } = useAuthStore();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -67,8 +67,8 @@ export default function EventsPage() {
           userEventIds = new Set(userEvents.map((e) => e.id));
         }
 
+        setEvents(data);
         setState({
-          events: data,
           availableTags: tags,
           joinedEventIds: userEventIds,
           isLoading: false,
@@ -79,7 +79,7 @@ export default function EventsPage() {
       }
     };
     loadEvents();
-  }, [isAuthenticated, selectedTagIds]);
+  }, [isAuthenticated, selectedTagIds, setEvents]);
 
   const handleJoinLeave = async (eventId: number, currentlyJoined: boolean) => {
     if (!isAuthenticated) {
@@ -109,7 +109,6 @@ export default function EventsPage() {
     }
   };
 
-  // Handles selection and deselection of tags for event filtering
   const toggleTag = (tagId: number) => {
     setParams((prev) => ({
       ...prev,
@@ -123,7 +122,6 @@ export default function EventsPage() {
   const filteredEvents = useMemo(() => {
     let result = events;
 
-    // Filter events by search query (title, location, description)
     const query = search.toLowerCase().trim();
     if (query) {
       result = result.filter(
@@ -152,7 +150,7 @@ export default function EventsPage() {
     <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-          Discover Events
+          Discover Events RESTORE TEST
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           Find and join exciting events happening around you

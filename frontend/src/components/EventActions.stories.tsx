@@ -6,33 +6,29 @@ const meta: Meta<typeof EventActions> = {
   component: EventActions,
   tags: ['autodocs'],
   args: {
-    onJoinLeave: () => console.log('onJoinLeave'),
     onEdit: () => console.log('onEdit'),
     onDelete: () => console.log('onDelete'),
     isLoading: false,
     isAuthenticated: true,
+    isOrganizer: true,
   },
 };
 
 export default meta;
 type Story = StoryObj<typeof EventActions>;
 
-export const JoinEvent: Story = {
-  args: { isJoined: false, isOrganizer: false },
-};
-
-export const LeaveEvent: Story = {
-  args: { isJoined: true, isOrganizer: false },
-};
-
 export const OrganizerActions: Story = {
-  args: { isJoined: false, isOrganizer: true },
+  args: { isOrganizer: true, isAuthenticated: true },
 };
 
 export const Loading: Story = {
-  args: { isJoined: false, isOrganizer: false, isLoading: true },
+  args: { isOrganizer: true, isAuthenticated: true, isLoading: true },
+};
+
+export const NotOrganizer: Story = {
+  args: { isOrganizer: false, isAuthenticated: true },
 };
 
 export const Unauthenticated: Story = {
-  args: { isAuthenticated: false },
+  args: { isAuthenticated: false, isOrganizer: false },
 };

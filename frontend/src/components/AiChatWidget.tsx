@@ -8,10 +8,10 @@ import type { ApiError } from "../types";
 import Button from "./Button";
 
 const suggestions = [
-  "What events am I attending this week?",
   "When is my next event?",
   "List all events I organize",
-  "Show tech events this weekend",
+  "Show my upcoming events",
+  "Count all my events",
 ];
 
 export default function AiChatWidget() {
@@ -30,17 +30,13 @@ export default function AiChatWidget() {
 
   if (!isAuthenticated) return null;
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    const trimmed = question.trim();
-    if (!trimmed || isLoading) return;
-
-    addMessage({ role: "user", text: trimmed });
-    setQuestion("");
+  // Common sending logic
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isLoading) return;
+    addMessage({ role: "user", text });
     setLoading(true);
-
     try {
-      const answer = await askAI(trimmed);
+      const answer = await askAI(text);
       addMessage({ role: "assistant", text: answer });
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
@@ -55,16 +51,23 @@ export default function AiChatWidget() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = question.trim();
+    if (!trimmed) return;
+    setQuestion("");
+    await sendMessage(trimmed);
+  };
+
   return (
     <div className="fixed inset-x-0 bottom-0 pointer-events-none z-[100]">
       <div className="max-w-[1280px] mx-auto relative px-4 h-full pointer-events-none">
-        {/* Chat window */}
         {isOpen && (
           <aside
+            id="ai-chat-aside"
             aria-label="AI Chat Assistant"
             className="pointer-events-auto absolute bottom-24 right-4 w-[calc(100vw-2rem)] sm:w-[380px] h-[500px] max-h-[calc(100vh-120px)] bg-white rounded-2xl border border-gray-200 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
           >
-            {/* Header */}
             <header className="flex items-center justify-between bg-green-600 px-4 py-3 shadow-md shrink-0">
               <div className="flex items-center gap-2">
                 <div className="bg-white/20 p-1.5 rounded-lg text-white">
@@ -85,6 +88,7 @@ export default function AiChatWidget() {
                     onClick={clearMessages}
                     className="p-2 text-green-100 hover:text-white transition-colors"
                     title="Clear chat"
+                    aria-label="Clear chat history"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -92,13 +96,13 @@ export default function AiChatWidget() {
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-2 text-green-100 hover:text-white transition-colors"
+                  aria-label="Close chat"
                 >
                   <X size={20} />
                 </button>
               </div>
             </header>
 
-            {/* Messages Area */}
             <ul
               aria-live="polite"
               className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 list-none"
@@ -110,17 +114,18 @@ export default function AiChatWidget() {
                       "Hi, {user?.name}! How can I help you today?" 👋
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <ul className="flex flex-wrap gap-2 list-none p-0" aria-label="Suggested questions">
                     {suggestions.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setQuestion(s)}
-                        className="text-[11px] bg-white border border-gray-200 hover:border-green-500 hover:text-green-600 px-3 py-1.5 rounded-full shadow-sm transition-all active:scale-95"
-                      >
-                        {s}
-                      </button>
+                      <li key={s}>
+                        <button
+                          onClick={() => sendMessage(s)} // Sends immediately
+                          className="text-[11px] bg-white border border-gray-200 hover:border-green-500 hover:text-green-600 px-3 py-1.5 rounded-full shadow-sm transition-all active:scale-95"
+                        >
+                          {s}
+                        </button>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </li>
               )}
 
@@ -167,7 +172,6 @@ export default function AiChatWidget() {
               />
             </ul>
 
-            {/* Footer Input */}
             <footer className="bg-white border-t p-3 shrink-0">
               <form onSubmit={handleSubmit} className="flex gap-2 relative">
                 <input
@@ -177,6 +181,7 @@ export default function AiChatWidget() {
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   placeholder="Ask about events..."
+                  aria-label="Ask about events"
                   className="flex-1 rounded-xl border border-gray-200 pl-3 pr-10 py-2.5 text-sm outline-none focus:border-green-500 transition-all placeholder:text-gray-400"
                 />
                 <div className="absolute right-1 top-1.5">
@@ -184,6 +189,7 @@ export default function AiChatWidget() {
                     type="submit"
                     size="sm"
                     className="!p-1.5 !rounded-lg"
+                    aria-label="Send message"
                     disabled={isLoading || !question.trim()}
                   >
                     <Send size={16} />
@@ -197,9 +203,11 @@ export default function AiChatWidget() {
           </aside>
         )}
 
-        {/* Floating Toggle Button */}
         <button
           onClick={() => setIsOpen((prev) => !prev)}
+          aria-label={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
+          aria-expanded={isOpen}
+          aria-controls="ai-chat-aside"
           className={`pointer-events-auto absolute bottom-4 right-4 z-[110] flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 ${
             isOpen ? "bg-gray-800 rotate-90 shadow-none" : "bg-green-600"
           }`}
@@ -209,8 +217,6 @@ export default function AiChatWidget() {
           ) : (
             <Bot className="h-6 w-6 text-white" />
           )}
-
-          {/* Badge with the number of messages */}
           {!isOpen && messages.length > 0 && (
             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white shadow-sm">
               {messages.length}

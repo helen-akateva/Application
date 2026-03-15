@@ -230,40 +230,34 @@ export default function EventForm({
         </div>
 
         {/* Visibility */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="relative">
-            <input
-              type="radio"
-              id="visibility-public"
-              name="visibility"
-              value="public"
-              checked={formik.values.visibility === "public"}
-              onChange={() => formik.setFieldValue("visibility", "public")}
-              className="peer sr-only"
-            />
-            <label
-              htmlFor="visibility-public"
-              className="flex cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white p-4 font-semibold text-gray-500 transition-all hover:bg-gray-50 peer-checked:border-green-600 peer-checked:bg-green-50 peer-checked:text-green-700"
-            >
-              Public
+        <div className="flex flex-col gap-3">
+          <label className="text-sm font-bold text-gray-900">Visibility</label>
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="visibility"
+                value="public"
+                checked={formik.values.visibility === "public"}
+                onChange={() => formik.setFieldValue("visibility", "public")}
+                className="h-4 w-4 border-gray-300 accent-green-600 focus:ring-green-500"
+              />
+              <span className="text-sm text-gray-700 hover:text-gray-900 transition-colors">
+                Public - Anyone can see and join this event
+              </span>
             </label>
-          </div>
-
-          <div className="relative">
-            <input
-              type="radio"
-              id="visibility-private"
-              name="visibility"
-              value="private"
-              checked={formik.values.visibility === "private"}
-              onChange={() => formik.setFieldValue("visibility", "private")}
-              className="peer sr-only"
-            />
-            <label
-              htmlFor="visibility-private"
-              className="flex cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white p-4 font-semibold text-gray-500 transition-all hover:bg-gray-50 peer-checked:border-green-600 peer-checked:bg-green-50 peer-checked:text-green-700"
-            >
-              Private
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="visibility"
+                value="private"
+                checked={formik.values.visibility === "private"}
+                onChange={() => formik.setFieldValue("visibility", "private")}
+                className="h-4 w-4 border-gray-300 accent-green-600 focus:ring-green-500"
+              />
+              <span className="text-sm text-gray-700 hover:text-gray-900 transition-colors">
+                Private - Only invited people can see this event
+              </span>
             </label>
           </div>
         </div>
